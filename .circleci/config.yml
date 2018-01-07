@@ -1,0 +1,10 @@
+
+version: 2
+jobs:
+  build:
+    working_directory: /go/src/github.com/kynrai/jingkan
+    docker:
+      - image: circleci/golang:latest
+    steps:
+          - checkout
+          - run: make
