@@ -1,6 +1,8 @@
 package datastore_example
 
+const kind = "datastore_example_kind"
+
 type Thing struct {
-	id   string `datastore:"id" json:"id"`
-	name string `datastore:"id" json:"name"`
+	Id   string `datastore:"id" json:"id"`
+	Name string `datastore:"id" json:"name"`
 }
