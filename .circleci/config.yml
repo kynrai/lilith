@@ -1,8 +1,7 @@
-
 version: 2
 jobs:
   build:
-    working_directory: /go/src/github.com/kynrai/jingkan
+    working_directory: /go/src/github.com/kynrai/lilith
     docker:
       - image: circleci/golang:latest
     steps:
