@@ -67,11 +67,7 @@ type repo struct {
 }
 
 func New() *repo {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-	projectid := projectID()
-	log.Println(projectid)
-	ds, err := datastore.NewClient(ctx, projectid)
+	ds, err := datastore.NewClient(context.Background(), projectID())
 	if err != nil {
 		// This repo wont work without a client so we can fatal here
 		log.Fatal(err)
@@ -79,12 +75,13 @@ func New() *repo {
 	return &repo{ds}
 }
 
-func (r *repo) Get(ctx context.Context, id string) (t *Thing, err error) {
+func (r *repo) Get(ctx context.Context, id string) (*Thing, error) {
+	t := &Thing{}
 	return t, r.ds.Get(ctx, datastore.NameKey(kind, id, nil), t)
 }
 
 func (r *repo) Put(ctx context.Context, t *Thing) error {
-	_, err := r.ds.Put(ctx, datastore.NameKey(kind, t.Id, nil), t)
+	_, err := r.ds.Put(ctx, datastore.NameKey(kind, t.ID, nil), t)
 	return err
 }
 
