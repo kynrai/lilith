@@ -1,0 +1,5 @@
+language: go
+# install:
+#   - go get -u github.com/kardianos/govendor
+go:
+  - 1.9.3
