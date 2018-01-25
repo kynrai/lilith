@@ -28,9 +28,9 @@ func TestGet(t *testing.T) {
 			name: "happy path",
 			id:   "1",
 			getter: GetterFunc(func(ctx context.Context, id string) (*Thing, error) {
-				return &Thing{Id: "1", Name: "test"}, nil
+				return &Thing{ID: "1", Name: "test"}, nil
 			}),
-			want: &Thing{Id: "1", Name: "test"},
+			want: &Thing{ID: "1", Name: "test"},
 		},
 		{
 			name: "error path",
@@ -78,15 +78,15 @@ func TestPut(t *testing.T) {
 	}{
 		{
 			name: "happy path",
-			body: &Thing{Id: "1", Name: "test"},
+			body: &Thing{ID: "1", Name: "test"},
 			putter: PutterFunc(func(ctx context.Context, t *Thing) error {
 				return nil
 			}),
-			want: &Thing{Id: "1", Name: "test"},
+			want: &Thing{ID: "1", Name: "test"},
 		},
 		{
 			name: "error path",
-			body: &Thing{Id: "1", Name: "test"},
+			body: &Thing{ID: "1", Name: "test"},
 			putter: PutterFunc(func(ctx context.Context, t *Thing) error {
 				return errors.New("boom!")
 			}),
