@@ -16,7 +16,7 @@ TODO:
 - Databases
     - [ ] DynamoDB (AWS)
     - [x] Postgres
-    - [ ] Datastore (google cloud)
+    - [x] Datastore (google cloud)
     - [ ] Spanner (google cloud)
     - [ ] TableStore (alicloud)
 - Big Data
@@ -31,7 +31,7 @@ TODO:
     - [ ] Firebase Auth
     - [ ] AWS Cognito
 - CI/CD
-    - [ ] CircleCI
+    - [x] CircleCI
     - [ ] TravisCI
 
 ## Motivation
