@@ -10,11 +10,13 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/kynrai/lilith/config"
+	"github.com/kynrai/lilith/services/datastore_example"
 	"github.com/kynrai/lilith/services/hello_world"
 )
 
 type Server struct {
-	Router *mux.Router
+	Router    *mux.Router
+	Datastore datastore_example.Repo
 }
 
 func New() *Server {
@@ -25,6 +27,9 @@ func New() *Server {
 	// Use this config variable in some initialisation
 	fmt.Println(conf.Secret)
 	s := &Server{}
+
+	s.Datastore = datastore_example.New()
+
 	s.Router = mux.NewRouter()
 	s.Router.StrictSlash(true)
 
@@ -33,6 +38,8 @@ func New() *Server {
 	v1 := s.Router.PathPrefix("/v1").Subrouter()
 	v1.Handle("/hello", hello_world.Hello()).Methods(http.MethodGet)
 	v1.Handle("/hello/{name}", hello_world.HelloName()).Methods(http.MethodGet)
+	v1.Handle("/datastore/{id}", datastore_example.GetThing(s.Datastore)).Methods(http.MethodGet)
+	v1.Handle("/datastore", datastore_example.PutThing(s.Datastore)).Methods(http.MethodPost)
 	return s
 }
 

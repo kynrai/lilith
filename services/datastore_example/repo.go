@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"cloud.google.com/go/datastore"
@@ -68,7 +69,9 @@ type repo struct {
 func New() *repo {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	ds, err := datastore.NewClient(ctx, projectID())
+	projectid := projectID()
+	log.Println(projectid)
+	ds, err := datastore.NewClient(ctx, projectid)
 	if err != nil {
 		// This repo wont work without a client so we can fatal here
 		log.Fatal(err)
@@ -85,20 +88,28 @@ func (r *repo) Put(ctx context.Context, t *Thing) error {
 	return err
 }
 
-// ProjectID will attempt to get the Google Cloud Project ID if this code is run inside a Google Cloud instance.
-// Any failure will presume that the code is running outside the cloud in which case a default project ID is returned.
-// Default project ID is useful for creating datastore clients just for test purposes where the real project ID does not matter.
+// ProjectID will attempt to get the Google Cloud Project ID with the following rules:
+// 1) Look for the DATASTORE_PROJECT_ID envar
+// 2) Use the metadata API to get ID, this will only work in Google Cloud
+// 3) Any failure or timeout (3s) will presume that the code is running outside the cloud
+// in which case a default project ID is returned.
 func projectID() string {
+	if id := os.Getenv("DATASTORE_PROJECT_ID"); id != "" {
+		return id
+	}
 	const defaultID = "project-id"
 	req, err := http.NewRequest(http.MethodGet, "http://metadata.google.internal/computeMetadata/v1/project/project-id", nil)
 	if err != nil {
 		return defaultID
 	}
 	req.Header.Add("Metadata-Flavor", "Google")
-	resp, err := http.DefaultClient.Do(req)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
 	if err != nil {
 		return defaultID
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusOK {
 		b, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
