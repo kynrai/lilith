@@ -1,4 +1,4 @@
-package datastore_example
+package handlers_test
 
 import (
 	"bytes"
@@ -13,6 +13,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/kylelemons/godebug/pretty"
 	h "github.com/kynrai/lilith/server/http"
+	"github.com/kynrai/lilith/services/datastore_example"
+	"github.com/kynrai/lilith/services/datastore_example/handlers"
+	"github.com/kynrai/lilith/services/datastore_example/models"
 )
 
 func TestGet(t *testing.T) {
@@ -20,22 +23,22 @@ func TestGet(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
 		id     string
-		getter Getter
-		want   *Thing
+		getter datastore_example.Getter
+		want   *models.Thing
 		err    *h.HTTPError
 	}{
 		{
 			name: "happy path",
 			id:   "1",
-			getter: GetterFunc(func(ctx context.Context, id string) (*Thing, error) {
-				return &Thing{ID: "1", Name: "test"}, nil
+			getter: datastore_example.GetterFunc(func(ctx context.Context, id string) (*models.Thing, error) {
+				return &models.Thing{ID: "1", Name: "test"}, nil
 			}),
-			want: &Thing{ID: "1", Name: "test"},
+			want: &models.Thing{ID: "1", Name: "test"},
 		},
 		{
 			name: "error path",
 			id:   "1",
-			getter: GetterFunc(func(ctx context.Context, id string) (*Thing, error) {
+			getter: datastore_example.GetterFunc(func(ctx context.Context, id string) (*models.Thing, error) {
 				return nil, errors.New("boom")
 			}),
 			err: &h.HTTPError{Code: 500},
@@ -45,12 +48,12 @@ func TestGet(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			r := mux.NewRouter()
-			r.Handle("/thing/{id}", GetThing(tc.getter))
+			r.Handle("/thing/{id}", handlers.GetThing(tc.getter))
 			req := httptest.NewRequest(http.MethodGet, "https://example.com/thing/"+tc.id, nil)
 			rw := httptest.NewRecorder()
 			r.ServeHTTP(rw, req)
 			if tc.want != nil {
-				got := &Thing{}
+				got := &models.Thing{}
 				if err := json.NewDecoder(rw.Body).Decode(got); err != nil {
 					t.Fatal(err)
 				}
@@ -71,23 +74,23 @@ func TestPut(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
 		name   string
-		putter Putter
-		body   *Thing
-		want   *Thing
+		putter datastore_example.Putter
+		body   *models.Thing
+		want   *models.Thing
 		err    *h.HTTPError
 	}{
 		{
 			name: "happy path",
-			body: &Thing{ID: "1", Name: "test"},
-			putter: PutterFunc(func(ctx context.Context, t *Thing) error {
+			body: &models.Thing{ID: "1", Name: "test"},
+			putter: datastore_example.PutterFunc(func(ctx context.Context, t *models.Thing) error {
 				return nil
 			}),
-			want: &Thing{ID: "1", Name: "test"},
+			want: &models.Thing{ID: "1", Name: "test"},
 		},
 		{
 			name: "error path",
-			body: &Thing{ID: "1", Name: "test"},
-			putter: PutterFunc(func(ctx context.Context, t *Thing) error {
+			body: &models.Thing{ID: "1", Name: "test"},
+			putter: datastore_example.PutterFunc(func(ctx context.Context, t *models.Thing) error {
 				return errors.New("boom!")
 			}),
 			err: &h.HTTPError{Code: 500},
@@ -97,7 +100,7 @@ func TestPut(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			r := mux.NewRouter()
-			r.Handle("/thing", PutThing(tc.putter))
+			r.Handle("/thing", handlers.PutThing(tc.putter))
 			b := &bytes.Buffer{}
 			if err := json.NewEncoder(b).Encode(tc.body); err != nil {
 				t.Fatal(err)
@@ -106,7 +109,7 @@ func TestPut(t *testing.T) {
 			rw := httptest.NewRecorder()
 			r.ServeHTTP(rw, req)
 			if tc.want != nil {
-				got := &Thing{}
+				got := &models.Thing{}
 				if err := json.NewDecoder(rw.Body).Decode(got); err != nil {
 					t.Fatal(err)
 				}

@@ -1,4 +1,4 @@
-package postgres_example
+package handlers
 
 import (
 	"encoding/json"
@@ -6,9 +6,11 @@ import (
 
 	"github.com/gorilla/mux"
 	h "github.com/kynrai/lilith/server/http"
+	"github.com/kynrai/lilith/services/datastore_example"
+	"github.com/kynrai/lilith/services/datastore_example/models"
 )
 
-func GetThing(g Getter) h.ErrorHandler {
+func GetThing(g datastore_example.Getter) h.ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		thing, err := g.Get(r.Context(), mux.Vars(r)["id"])
 		if err != nil {
@@ -21,16 +23,16 @@ func GetThing(g Getter) h.ErrorHandler {
 	}
 }
 
-func PutThing(g Setter) h.ErrorHandler {
+func PutThing(p datastore_example.Putter) h.ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request) error {
-		var thing Thing
-		if err := json.NewDecoder(r.Body).Decode(&thing); err != nil {
+		t := models.Thing{}
+		if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
 			return h.HTTPError{Code: http.StatusBadRequest, Err: err}
 		}
-		if err := g.Set(r.Context(), &thing); err != nil {
+		if err := p.Put(r.Context(), &t); err != nil {
 			return h.HTTPError{Code: http.StatusInternalServerError, Err: err}
 		}
-		if err := json.NewEncoder(w).Encode(thing); err != nil {
+		if err := json.NewEncoder(w).Encode(&t); err != nil {
 			return h.HTTPError{Code: http.StatusInternalServerError, Err: err}
 		}
 		return nil

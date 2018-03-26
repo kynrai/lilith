@@ -9,7 +9,10 @@ import (
 	"time"
 
 	"cloud.google.com/go/datastore"
+	"github.com/kynrai/lilith/services/datastore_example/models"
 )
+
+const kind = "datastore_example_kind"
 
 var _ Repo = (*repo)(nil)
 
@@ -20,45 +23,45 @@ type Repo interface {
 
 type (
 	Getter interface {
-		Get(ctx context.Context, id string) (*Thing, error)
+		Get(ctx context.Context, id string) (*models.Thing, error)
 	}
-	GetterFunc func(ctx context.Context, id string) (*Thing, error)
+	GetterFunc func(ctx context.Context, id string) (*models.Thing, error)
 )
 
-func (f GetterFunc) Get(ctx context.Context, id string) (*Thing, error) {
+func (f GetterFunc) Get(ctx context.Context, id string) (*models.Thing, error) {
 	return f(ctx, id)
 }
 
 type (
 	MultiGetter interface {
-		GetMulti(ctx context.Context, ids ...string) ([]*Thing, error)
+		GetMulti(ctx context.Context, ids ...string) ([]*models.Thing, error)
 	}
-	MultiGetterFunc func(ctx context.Context, ids ...string) ([]*Thing, error)
+	MultiGetterFunc func(ctx context.Context, ids ...string) ([]*models.Thing, error)
 )
 
-func (f MultiGetterFunc) GetMulti(ctx context.Context, ids ...string) ([]*Thing, error) {
+func (f MultiGetterFunc) GetMulti(ctx context.Context, ids ...string) ([]*models.Thing, error) {
 	return f(ctx, ids...)
 }
 
 type (
 	Putter interface {
-		Put(ctx context.Context, t *Thing) error
+		Put(ctx context.Context, t *models.Thing) error
 	}
-	PutterFunc func(ctx context.Context, t *Thing) error
+	PutterFunc func(ctx context.Context, t *models.Thing) error
 )
 
-func (f PutterFunc) Put(ctx context.Context, t *Thing) error {
+func (f PutterFunc) Put(ctx context.Context, t *models.Thing) error {
 	return f(ctx, t)
 }
 
 type (
 	MultiPutter interface {
-		PutMulti(ctx context.Context, ts ...*Thing) error
+		PutMulti(ctx context.Context, ts ...*models.Thing) error
 	}
-	MultiPutterFunc func(ctx context.Context, ts ...*Thing) error
+	MultiPutterFunc func(ctx context.Context, ts ...*models.Thing) error
 )
 
-func (f MultiPutterFunc) PutMulti(ctx context.Context, ts ...*Thing) error {
+func (f MultiPutterFunc) PutMulti(ctx context.Context, ts ...*models.Thing) error {
 	return f(ctx, ts...)
 }
 
@@ -75,12 +78,12 @@ func New() *repo {
 	return &repo{ds}
 }
 
-func (r *repo) Get(ctx context.Context, id string) (*Thing, error) {
-	t := &Thing{}
+func (r *repo) Get(ctx context.Context, id string) (*models.Thing, error) {
+	t := &models.Thing{}
 	return t, r.ds.Get(ctx, datastore.NameKey(kind, id, nil), t)
 }
 
-func (r *repo) Put(ctx context.Context, t *Thing) error {
+func (r *repo) Put(ctx context.Context, t *models.Thing) error {
 	_, err := r.ds.Put(ctx, datastore.NameKey(kind, t.ID, nil), t)
 	return err
 }
