@@ -1,6 +1,4 @@
-package datastore_example
-
-const kind = "datastore_example_kind"
+package models
 
 type Thing struct {
 	ID   string `datastore:"id" json:"id"`

@@ -11,7 +11,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/kynrai/lilith/config"
 	"github.com/kynrai/lilith/services/datastore_example"
-	"github.com/kynrai/lilith/services/hello_world"
+	datastore_exampleH "github.com/kynrai/lilith/services/datastore_example/handlers"
+	hello_worldH "github.com/kynrai/lilith/services/hello_world/handlers"
 )
 
 type Server struct {
@@ -36,10 +37,10 @@ func New() *Server {
 	s.Router.Handle("/health", Health()).Methods(http.MethodGet)
 
 	v1 := s.Router.PathPrefix("/v1").Subrouter()
-	v1.Handle("/hello", hello_world.Hello()).Methods(http.MethodGet)
-	v1.Handle("/hello/{name}", hello_world.HelloName()).Methods(http.MethodGet)
-	v1.Handle("/datastore/{id}", datastore_example.GetThing(s.Datastore)).Methods(http.MethodGet)
-	v1.Handle("/datastore", datastore_example.PutThing(s.Datastore)).Methods(http.MethodPost)
+	v1.Handle("/hello", hello_worldH.Hello()).Methods(http.MethodGet)
+	v1.Handle("/hello/{name}", hello_worldH.HelloName()).Methods(http.MethodGet)
+	v1.Handle("/datastore/{id}", datastore_exampleH.GetThing(s.Datastore)).Methods(http.MethodGet)
+	v1.Handle("/datastore", datastore_exampleH.PutThing(s.Datastore)).Methods(http.MethodPost)
 	return s
 }
 

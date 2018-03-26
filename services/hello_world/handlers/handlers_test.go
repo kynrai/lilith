@@ -1,4 +1,4 @@
-package hello_world_test
+package handlers_test
 
 import (
 	"net/http"
@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/kynrai/lilith/services/hello_world"
+	"github.com/kynrai/lilith/services/hello_world/handlers"
 )
 
 func TestHello(t *testing.T) {
@@ -25,7 +25,7 @@ func TestHello(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			handler := hello_world.Hello()
+			handler := handlers.Hello()
 			req := httptest.NewRequest(http.MethodGet, "https://example.com", nil)
 			rw := httptest.NewRecorder()
 			handler(rw, req)
@@ -56,7 +56,7 @@ func TestHelloName(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			r := mux.NewRouter()
-			r.Handle("/hello/{name}", hello_world.HelloName())
+			r.Handle("/hello/{name}", handlers.HelloName())
 			req := httptest.NewRequest(http.MethodGet, "https://example.com/hello/"+tc.input, nil)
 			rw := httptest.NewRecorder()
 			r.ServeHTTP(rw, req)

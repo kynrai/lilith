@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/kylelemons/godebug/pretty"
+	"github.com/kynrai/lilith/services/datastore_example/models"
 )
 
 const emulator = "localhost:8081"
@@ -25,14 +26,14 @@ func TestPutGet_Integration(t *testing.T) {
 	for _, tc := range []struct {
 		name string
 		id   string
-		body *Thing
-		want *Thing
+		body *models.Thing
+		want *models.Thing
 	}{
 		{
 			name: "happy path",
 			id:   "1",
-			body: &Thing{ID: "1", Name: "test"},
-			want: &Thing{ID: "1", Name: "test"},
+			body: &models.Thing{ID: "1", Name: "test"},
+			want: &models.Thing{ID: "1", Name: "test"},
 		},
 	} {
 		tc := tc

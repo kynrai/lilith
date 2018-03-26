@@ -1,4 +1,4 @@
-package dynamodb_example
+package handlers_test
 
 import "testing"
 

@@ -1,4 +1,4 @@
-package postgres_example_test
+package handlers_test
 
 import (
 	"bytes"
@@ -14,22 +14,24 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 	h "github.com/kynrai/lilith/server/http"
 	"github.com/kynrai/lilith/services/postgres_example"
+	"github.com/kynrai/lilith/services/postgres_example/handlers"
+	"github.com/kynrai/lilith/services/postgres_example/models"
 )
 
 func TestGetThing(t *testing.T) {
-	thing1 := &postgres_example.Thing{ID: "1"}
+	thing1 := &models.Thing{ID: "1"}
 	t.Parallel()
 	for _, tc := range []struct {
 		name   string
 		id     string
 		getter postgres_example.Getter
-		want   *postgres_example.Thing
+		want   *models.Thing
 		err    *h.HTTPError
 	}{
 		{
 			name: "happy path",
 			id:   "1",
-			getter: postgres_example.GetterFunc(func(ctx context.Context, id string) (*postgres_example.Thing, error) {
+			getter: postgres_example.GetterFunc(func(ctx context.Context, id string) (*models.Thing, error) {
 				if id != "1" {
 					return nil, nil
 				}
@@ -40,7 +42,7 @@ func TestGetThing(t *testing.T) {
 		{
 			name: "error path",
 			id:   "1",
-			getter: postgres_example.GetterFunc(func(ctx context.Context, id string) (*postgres_example.Thing, error) {
+			getter: postgres_example.GetterFunc(func(ctx context.Context, id string) (*models.Thing, error) {
 				return nil, h.HTTPError{Code: 500}
 			}),
 			err: &h.HTTPError{Code: 500},
@@ -50,7 +52,7 @@ func TestGetThing(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			r := mux.NewRouter()
-			r.Handle("/thing/{id}", postgres_example.GetThing(tc.getter))
+			r.Handle("/thing/{id}", handlers.GetThing(tc.getter))
 			req := httptest.NewRequest(http.MethodGet, "https://example.com/thing/"+tc.id, nil)
 			rw := httptest.NewRecorder()
 			r.ServeHTTP(rw, req)
@@ -63,7 +65,7 @@ func TestGetThing(t *testing.T) {
 			if rw.Body.String() == "" {
 				t.Fatal("GetThing failed, body should not be empty")
 			}
-			var got postgres_example.Thing
+			var got models.Thing
 			if err := json.NewDecoder(rw.Body).Decode(&got); err != nil {
 				t.Fatal("GetThing failed, failed to decode response")
 			}
@@ -75,21 +77,21 @@ func TestGetThing(t *testing.T) {
 }
 
 func TestSetThing(t *testing.T) {
-	thing1 := &postgres_example.Thing{ID: "1"}
+	thing1 := &models.Thing{ID: "1"}
 	t.Parallel()
 	for _, tc := range []struct {
 		name   string
 		id     string
 		setter postgres_example.Setter
 		thing  string
-		want   *postgres_example.Thing
+		want   *models.Thing
 		err    *h.HTTPError
 	}{
 		{
 			name:  "happy path",
 			thing: `{"id":"1"}`,
 			want:  thing1,
-			setter: postgres_example.SetterFunc(func(ctx context.Context, t *postgres_example.Thing) error {
+			setter: postgres_example.SetterFunc(func(ctx context.Context, t *models.Thing) error {
 				return nil
 			}),
 		},
@@ -97,14 +99,14 @@ func TestSetThing(t *testing.T) {
 			name:  "decode fail",
 			thing: "boom",
 			err:   &h.HTTPError{Code: 400},
-			setter: postgres_example.SetterFunc(func(ctx context.Context, t *postgres_example.Thing) error {
+			setter: postgres_example.SetterFunc(func(ctx context.Context, t *models.Thing) error {
 				return nil
 			}),
 		},
 		{
 			name:  "error path",
 			thing: `{"id":"1"}`,
-			setter: postgres_example.SetterFunc(func(ctx context.Context, t *postgres_example.Thing) error {
+			setter: postgres_example.SetterFunc(func(ctx context.Context, t *models.Thing) error {
 				return errors.New("boom")
 			}),
 			err: &h.HTTPError{Code: http.StatusInternalServerError},
@@ -114,7 +116,7 @@ func TestSetThing(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			r := mux.NewRouter()
-			r.Handle("/thing", postgres_example.PutThing(tc.setter))
+			r.Handle("/thing", handlers.PutThing(tc.setter))
 			req := httptest.NewRequest(http.MethodPost, "/thing", bytes.NewBufferString(tc.thing))
 			rw := httptest.NewRecorder()
 			r.ServeHTTP(rw, req)
@@ -127,7 +129,7 @@ func TestSetThing(t *testing.T) {
 			if rw.Body.String() == "" {
 				t.Fatal("GetThing failed, body should not be empty")
 			}
-			var got postgres_example.Thing
+			var got models.Thing
 			if err := json.NewDecoder(rw.Body).Decode(&got); err != nil {
 				t.Fatal("GetThing failed, failed to decode response")
 			}
