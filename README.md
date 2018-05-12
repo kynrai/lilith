@@ -12,7 +12,7 @@ TODO:
 - HTTP
     - [x] Hello world server
     - [x] CORS example
-    - [ ] AuthZ middleware
+    - [ ] AuthN middleware
 - Databases
     - [ ] DynamoDB (AWS)
     - [x] Postgres
@@ -33,6 +33,11 @@ TODO:
 - CI/CD
     - [x] CircleCI
     - [ ] TravisCI
+- Kubernetes
+    - [ ] Helm Tiller Setup
+    - [ ] Cert Manager on GCE
+    - [ ] Cron Jobs
+    - [ ] API Services 
 
 ## Motivation
 Microservice are cool and great for scaling, especailly with kubernetes. However experiance tells us that its rarely a good idea to start a greenfield project buy building out complex microservice infrastrucutre and architecture. Especailly before your team grows.
