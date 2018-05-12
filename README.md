@@ -34,10 +34,10 @@ TODO:
     - [x] CircleCI
     - [ ] TravisCI
 - Kubernetes
-    - [ ] Helm Tiller Setup
-    - [ ] Cert Manager on GCE
+    - [x] Helm Tiller Setup
+    - [x] Cert Manager on GCE
     - [ ] Cron Jobs
-    - [ ] API Services 
+    - [x] API Services 
 
 ## Motivation
 Microservice are cool and great for scaling, especailly with kubernetes. However experiance tells us that its rarely a good idea to start a greenfield project buy building out complex microservice infrastrucutre and architecture. Especailly before your team grows.
