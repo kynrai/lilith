@@ -1,0 +1,49 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: lilith
+  labels:
+    app: lilith
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: lilith
+  template:
+    metadata:
+      labels:
+        app: lilith
+    spec:
+      containers:
+        - name: api
+          image: "{{ .Values.image }}:{{ .Values.hash }}"
+          imagePullPolicy: Always
+          ports:
+            - containerPort: {{ .Values.port }}
+          readinessProbe:
+            httpGet:
+              scheme: HTTPS
+              path: /health
+              port: {{ .Values.port }}
+          env:
+            - name: PORT
+              value: "{{ .Values.port }}"
+            - name: DATABASE_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql-db-credentials
+                  key: dsn
+        - name: cloudsql-proxy
+          image: gcr.io/cloudsql-docker/gce-proxy:1.11
+          imagePullPolicy: Always
+          command: ["/cloud_sql_proxy",
+                      "-instances=lilith:europe-west2:core=tcp:5432",
+                      "-credential_file=/secrets/cloudsql/credentials.json"]
+          volumeMounts:
+            - name: cloudsql-instance-credentials
+              mountPath: /secrets/cloudsql
+              readOnly: true
+      volumes:
+        - name: cloudsql-instance-credentials
+          secret:
+            secretName: cloudsql-instance-credentials
