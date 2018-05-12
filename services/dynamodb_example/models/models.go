@@ -1,4 +1,4 @@
-package postgres_example
+package models
 
 type Thing struct {
 	ID string `json:"id"`
