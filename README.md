@@ -32,7 +32,7 @@ TODO:
     - [ ] AWS Cognito
 - CI/CD
     - [x] CircleCI
-    - [ ] TravisCI
+    - [x] TravisCI
 - Kubernetes
     - [ ] Helm Tiller Setup
     - [ ] Cert Manager on GCE

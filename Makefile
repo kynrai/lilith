@@ -1,8 +1,8 @@
 
 BINARIES=$$(go list ./cmd/...)
-TESTABLE=$$(go list ./... | grep -v /vendor/)
+TESTABLE=$$(go list ./...)
 
-all: vet test build clean
+all: test build
 
 deps:
 	@dep ensure && dep ensure -update
@@ -16,10 +16,6 @@ test:
 	@go test -v $(TESTABLE)
 .PHONY: test
 
-vet:
-	@go vet $(TESTABLE)
-.PHONY: vet
-
 fmt:
 	@goimports -w $$(find . -type f -name '*.go' -not -path "./vendor/*")
 .PHONY: fmt
@@ -27,10 +23,6 @@ fmt:
 lint:
 	@golint $(TESTABLE)
 .PHONY: lint
-
-clean:
-	@go clean
-.PHONY: clean
 
 local: all
 	@heroku local web

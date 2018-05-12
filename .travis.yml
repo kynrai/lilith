@@ -1,5 +1,19 @@
 language: go
-# install:
-#   - go get -u github.com/kardianos/govendor
+
+dist: "trusty"
+
+addons:  
+  apt:
+    packages:
+      - google-cloud-sdk
+
+services:
+  - postgresql
+
+before_script:
+  - gcloud beta emulators datastore start &
+  - $(gcloud beta emulators datastore env-init)
+  - psql -c 'create database travis_ci_test;' -U postgres
+
 go:
-  - 1.9.3
+  - "1.10.x"
