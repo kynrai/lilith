@@ -1,0 +1,16 @@
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: Certificate
+metadata:
+  name: api-prod
+  namespace: default
+spec:
+  secretName: api-prod-tls
+  issuerRef:
+    name: letsencrypt-prod
+  commonName: api.k8s.andromeda-ap.com
+  acme:
+    config:
+    - dns01:
+        provider: cloud-dns
+      domains:
+      - api.k8s.andromeda-ap.com
