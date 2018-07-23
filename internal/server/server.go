@@ -5,12 +5,11 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"regexp"
 	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"github.com/gorilla/handlers"
+	"github.com/go-chi/cors"
 	"github.com/kynrai/lilith/internal/config"
 	"github.com/kynrai/lilith/pkg/datastore_example"
 	datastore_exampleH "github.com/kynrai/lilith/pkg/datastore_example/handlers"
@@ -34,6 +33,14 @@ func New() *Server {
 	s.Datastore = datastore_example.New()
 
 	s.Router = chi.NewRouter()
+
+	cors := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	})
 	s.Router.Use(
 		middleware.RedirectSlashes,
 		middleware.DefaultCompress,
@@ -43,6 +50,7 @@ func New() *Server {
 		middleware.Recoverer,
 		middleware.Timeout(60*time.Second),
 		middleware.SetHeader("Content-Type", "application/json"),
+		cors.Handler,
 	)
 
 	s.Router.Method(http.MethodGet, "/health", Health())
@@ -64,17 +72,5 @@ func (s *Server) Run() {
 	if port == "" {
 		log.Fatal("$PORT must be set")
 	}
-	allowedHeaders := handlers.AllowedHeaders([]string{"Content-Type", "Authorization"})
-	allowCredentials := handlers.AllowCredentials()
-	allowedMethods := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT"})
-	allowedOrigins := handlers.AllowedOriginValidator(allowedOriginValidator())
-	corsHandler := handlers.CORS(allowedHeaders, allowCredentials, allowedMethods, allowedOrigins)
-	log.Fatal(http.ListenAndServe(":"+port, handlers.CompressHandler(corsHandler((s.Router)))))
-}
-
-func allowedOriginValidator() func(string) bool {
-	r := regexp.MustCompile(`.*`)
-	return func(s string) bool {
-		return r.MatchString(s)
-	}
+	log.Fatal(http.ListenAndServe(":"+port, s.Router))
 }
