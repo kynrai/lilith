@@ -6,9 +6,11 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"time"
 
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
 	"github.com/kynrai/lilith/internal/config"
 	"github.com/kynrai/lilith/pkg/datastore_example"
 	datastore_exampleH "github.com/kynrai/lilith/pkg/datastore_example/handlers"
@@ -16,7 +18,7 @@ import (
 )
 
 type Server struct {
-	Router    *mux.Router
+	Router    *chi.Mux
 	Datastore datastore_example.Repo
 }
 
@@ -31,16 +33,27 @@ func New() *Server {
 
 	s.Datastore = datastore_example.New()
 
-	s.Router = mux.NewRouter()
-	s.Router.StrictSlash(true)
+	s.Router = chi.NewRouter()
+	s.Router.Use(
+		middleware.RedirectSlashes,
+		middleware.DefaultCompress,
+		middleware.RequestID,
+		middleware.RealIP,
+		middleware.Logger,
+		middleware.Recoverer,
+		middleware.Timeout(60*time.Second),
+		middleware.SetHeader("Content-Type", "application/json"),
+	)
 
-	s.Router.Handle("/health", Health()).Methods(http.MethodGet)
+	s.Router.Method(http.MethodGet, "/health", Health())
 
-	v1 := s.Router.PathPrefix("/v1").Subrouter()
-	v1.Handle("/hello", hello_worldH.Hello()).Methods(http.MethodGet)
-	v1.Handle("/hello/{name}", hello_worldH.HelloName()).Methods(http.MethodGet)
-	v1.Handle("/datastore/{id}", datastore_exampleH.GetThing(s.Datastore)).Methods(http.MethodGet)
-	v1.Handle("/datastore", datastore_exampleH.PutThing(s.Datastore)).Methods(http.MethodPost)
+	s.Router.Route("/v1", func(r chi.Router) {
+		r.Method(http.MethodGet, "/hello", hello_worldH.Hello())
+		r.Method(http.MethodGet, "/hello/{name}", hello_worldH.HelloName())
+		r.Method(http.MethodGet, "/datastore/{id}", datastore_exampleH.GetThing(s.Datastore))
+		r.Method(http.MethodPost, "/datastore", datastore_exampleH.PutThing(s.Datastore))
+	})
+
 	return s
 }
 

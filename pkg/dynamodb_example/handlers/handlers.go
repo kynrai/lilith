@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi"
 	h "github.com/kynrai/lilith/internal/http"
 	"github.com/kynrai/lilith/pkg/dynamodb_example"
 	"github.com/kynrai/lilith/pkg/dynamodb_example/models"
@@ -12,7 +12,7 @@ import (
 
 func GetThing(g dynamodb_example.Getter) h.ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request) error {
-		t, err := g.Get(r.Context(), mux.Vars(r)["id"])
+		t, err := g.Get(r.Context(), chi.URLParam(r, "id"))
 		if err != nil {
 			return h.HTTPError{Code: http.StatusInternalServerError, Err: err}
 		}
