@@ -262,8 +262,6 @@ type DataSource struct {
 
 	// ClientId: Data source client id which should be used to receive
 	// refresh token.
-	// When not supplied, no offline credentials are populated for data
-	// transfer.
 	ClientId string `json:"clientId,omitempty"`
 
 	// DataRefreshType: Specifies whether the data source supports automatic
@@ -328,11 +326,10 @@ type DataSource struct {
 	Parameters []*DataSourceParameter `json:"parameters,omitempty"`
 
 	// Scopes: Api auth scopes for which refresh token needs to be obtained.
-	// Only valid
-	// when `client_id` is specified. Ignored otherwise. These are scopes
-	// needed
-	// by a data source to prepare data and ingest them into BigQuery,
-	// e.g., https://www.googleapis.com/auth/bigquery
+	// These are
+	// scopes needed by a data source to prepare data and ingest them
+	// into
+	// BigQuery, e.g., https://www.googleapis.com/auth/bigquery
 	Scopes []string `json:"scopes,omitempty"`
 
 	// SupportsCustomSchedule: Specifies whether the data source supports a
@@ -357,7 +354,7 @@ type DataSource struct {
 
 	// UpdateDeadlineSeconds: The number of seconds to wait for an update
 	// from the data source
-	// before BigQuery marks the transfer as failed.
+	// before the Data Transfer Service marks the transfer as FAILED.
 	UpdateDeadlineSeconds int64 `json:"updateDeadlineSeconds,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -408,7 +405,7 @@ type DataSourceParameter struct {
 	// DisplayName: Parameter display name in the user interface.
 	DisplayName string `json:"displayName,omitempty"`
 
-	// Fields: When parameter is a record, describes child fields.
+	// Fields: Deprecated. This field has no effect.
 	Fields []*DataSourceParameter `json:"fields,omitempty"`
 
 	// Immutable: Cannot be changed after initial creation.
@@ -425,12 +422,10 @@ type DataSourceParameter struct {
 	// ParamId: Parameter identifier.
 	ParamId string `json:"paramId,omitempty"`
 
-	// Recurse: If set to true, schema should be taken from the parent with
-	// the same
-	// parameter_id. Only applicable when parameter type is RECORD.
+	// Recurse: Deprecated. This field has no effect.
 	Recurse bool `json:"recurse,omitempty"`
 
-	// Repeated: Can parameter have multiple values.
+	// Repeated: Deprecated. This field has no effect.
 	Repeated bool `json:"repeated,omitempty"`
 
 	// Required: Is parameter required.
@@ -445,7 +440,7 @@ type DataSourceParameter struct {
 	// Will be serialized to json as string.
 	//   "DOUBLE" - Double precision floating point parameter.
 	//   "BOOLEAN" - Boolean parameter.
-	//   "RECORD" - Record parameter.
+	//   "RECORD" - Deprecated. This field has no effect.
 	//   "PLUS_PAGE" - Page ID for a Google+ Page.
 	Type string `json:"type,omitempty"`
 
@@ -1171,7 +1166,7 @@ type TransferRun struct {
 	// scheduled manually, this is empty.
 	// NOTE: the system might choose to delay the schedule depending on
 	// the
-	// current load, so `schedule_time` doesn't always matches this.
+	// current load, so `schedule_time` doesn't always match this.
 	Schedule string `json:"schedule,omitempty"`
 
 	// ScheduleTime: Minimum time after which a transfer run can be started.

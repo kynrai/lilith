@@ -1,5 +1,7 @@
 // Package spanner provides access to the Cloud Spanner API.
 //
+// This package is DEPRECATED. Use package cloud.google.com/go/spanner instead.
+//
 // See https://cloud.google.com/spanner/
 //
 // Usage example:
@@ -206,7 +208,7 @@ type Binding struct {
 	//
 	// * `user:{emailid}`: An email address that represents a specific
 	// Google
-	//    account. For example, `alice@gmail.com` or `joe@example.com`.
+	//    account. For example, `alice@gmail.com` .
 	//
 	//
 	// * `serviceAccount:{emailid}`: An email address that represents a

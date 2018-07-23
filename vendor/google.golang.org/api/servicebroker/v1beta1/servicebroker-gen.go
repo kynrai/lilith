@@ -197,6 +197,12 @@ type GoogleCloudServicebrokerV1beta1__Binding struct {
 	// Timestamp for when the binding was created.
 	CreateTime string `json:"createTime,omitempty"`
 
+	// DeploymentName: Output only.
+	// String containing the Deployment Manager deployment name that was
+	// created
+	// for this binding,
+	DeploymentName string `json:"deploymentName,omitempty"`
+
 	// Parameters: Configuration options for the service binding.
 	Parameters googleapi.RawMessage `json:"parameters,omitempty"`
 
@@ -205,6 +211,13 @@ type GoogleCloudServicebrokerV1beta1__Binding struct {
 	// Maximum length is 64, GUID recommended.
 	// Required.
 	PlanId string `json:"plan_id,omitempty"`
+
+	// ResourceName: Output only.
+	// The resource name of the binding,
+	// e.g.
+	// projects/project_id/brokers/broker_id/service_instances/instance_
+	// id/bindings/binding_id.
+	ResourceName string `json:"resourceName,omitempty"`
 
 	// ServiceId: The id of the service. Must be a valid identifier of a
 	// service
@@ -523,6 +536,11 @@ type GoogleCloudServicebrokerV1beta1__GetBindingResponse struct {
 	// Credentials: Credentials to use the binding.
 	Credentials googleapi.RawMessage `json:"credentials,omitempty"`
 
+	// DeploymentName: String containing the Deployment Manager deployment
+	// name that was created
+	// for this binding,
+	DeploymentName string `json:"deploymentName,omitempty"`
+
 	// Description: Used to communicate description of the response. Usually
 	// for non-standard
 	// error
@@ -530,6 +548,13 @@ type GoogleCloudServicebrokerV1beta1__GetBindingResponse struct {
 	// https://github.com/openservicebrokerapi/servicebroker/blob/mast
 	// er/spec.md#service-broker-errors
 	Description string `json:"description,omitempty"`
+
+	// ResourceName: Output only.
+	// The resource name of the binding,
+	// e.g.
+	// projects/project_id/brokers/broker_id/service_instances/instance_
+	// id/bindings/binding_id.
+	ResourceName string `json:"resourceName,omitempty"`
 
 	// RouteServiceUrl: A URL to which the platform may proxy requests for
 	// the address sent with
@@ -963,6 +988,12 @@ type GoogleCloudServicebrokerV1beta1__ServiceInstance struct {
 	// Timestamp for when the instance was created.
 	CreateTime string `json:"createTime,omitempty"`
 
+	// DeploymentName: Output only.
+	// String containing the Deployment Manager deployment name that was
+	// created
+	// for this instance,
+	DeploymentName string `json:"deploymentName,omitempty"`
+
 	// Description: To return errors when GetInstance call is done via HTTP
 	// to be unified with
 	// other methods.
@@ -1087,6 +1118,15 @@ func (s *GoogleCloudServicebrokerV1beta1__UpdateServiceInstanceResponse) Marshal
 
 // GoogleIamV1__Binding: Associates `members` with a `role`.
 type GoogleIamV1__Binding struct {
+	// Condition: Unimplemented. The condition that is associated with this
+	// binding.
+	// NOTE: an unsatisfied condition will not allow user access via
+	// current
+	// binding. Different bindings, including their conditions, are
+	// examined
+	// independently.
+	Condition *GoogleType__Expr `json:"condition,omitempty"`
+
 	// Members: Specifies the identities requesting access for a Cloud
 	// Platform resource.
 	// `members` can have the following values:
@@ -1123,12 +1163,10 @@ type GoogleIamV1__Binding struct {
 	Members []string `json:"members,omitempty"`
 
 	// Role: Role that is assigned to `members`.
-	// For example, `roles/viewer`, `roles/editor`, or
-	// `roles/owner`.
-	// Required
+	// For example, `roles/viewer`, `roles/editor`, or `roles/owner`.
 	Role string `json:"role,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "Members") to
+	// ForceSendFields is a list of field names (e.g. "Condition") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -1136,7 +1174,7 @@ type GoogleIamV1__Binding struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "Members") to include in
+	// NullFields is a list of field names (e.g. "Condition") to include in
 	// API requests with the JSON null value. By default, fields with empty
 	// values are omitted from API requests. However, any field with an
 	// empty value appearing in NullFields will be sent to the server as
@@ -1376,6 +1414,60 @@ type GoogleProtobuf__Empty struct {
 	// ServerResponse contains the HTTP response code and headers from the
 	// server.
 	googleapi.ServerResponse `json:"-"`
+}
+
+// GoogleType__Expr: Represents an expression text. Example:
+//
+//     title: "User account presence"
+//     description: "Determines whether the request has a user account"
+//     expression: "size(request.user) > 0"
+type GoogleType__Expr struct {
+	// Description: An optional description of the expression. This is a
+	// longer text which
+	// describes the expression, e.g. when hovered over it in a UI.
+	Description string `json:"description,omitempty"`
+
+	// Expression: Textual representation of an expression in
+	// Common Expression Language syntax.
+	//
+	// The application context of the containing message determines
+	// which
+	// well-known feature set of CEL is supported.
+	Expression string `json:"expression,omitempty"`
+
+	// Location: An optional string indicating the location of the
+	// expression for error
+	// reporting, e.g. a file name and a position in the file.
+	Location string `json:"location,omitempty"`
+
+	// Title: An optional title for the expression, i.e. a short string
+	// describing
+	// its purpose. This can be used e.g. in UIs which allow to enter
+	// the
+	// expression.
+	Title string `json:"title,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Description") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Description") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleType__Expr) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleType__Expr
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // method id "servicebroker.projects.brokers.create":

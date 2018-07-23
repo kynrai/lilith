@@ -47,7 +47,8 @@ func (a *API) Setup() {
 	a.renameCollidingFields()
 	a.updateTopLevelShapeReferences()
 	a.createInputOutputShapes()
-	a.suppressEventStreams()
+	a.suppressHTTP2EventStreams()
+	a.setupEventStreams()
 	a.customizationPasses()
 
 	if !a.NoRemoveUnusedShapes {

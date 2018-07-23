@@ -472,8 +472,7 @@ func (c *DynamoDB) CreateBackupRequest(input *CreateBackupInput) (req *request.R
 //   table. The backups is either being created, deleted or restored to a table.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
 //   Up to 10 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
@@ -558,20 +557,17 @@ func (c *DynamoDB) CreateGlobalTableRequest(input *CreateGlobalTableInput) (req 
 // relationship between two or more DynamoDB tables with the same table name
 // in the provided regions.
 //
-// Tables can only be added as the replicas of a global table group under the
-// following conditions:
+// If you want to add a new replica table to a global table, each of the following
+// conditions must be true:
 //
-//    *  The tables must have the same name.
+//    * The table must have the same primary key as all of the other replicas.
 //
-//    *  The tables must contain no items.
+//    * The table must have the same name as all of the other replicas.
 //
-//    *  The tables must have the same hash key and sort key (if present).
+//    * The table must have DynamoDB Streams enabled, with the stream containing
+//    both the new and the old images of the item.
 //
-//    *  The tables must have DynamoDB Streams enabled (NEW_AND_OLD_IMAGES).
-//
-//
-//    *  The tables must have same provisioned and maximum write capacity units.
-//
+//    * None of the replica tables in the global table can contain any data.
 //
 // If global secondary indexes are specified, then the following conditions
 // must also be met:
@@ -581,8 +577,15 @@ func (c *DynamoDB) CreateGlobalTableRequest(input *CreateGlobalTableInput) (req 
 //    *  The global secondary indexes must have the same hash key and sort key
 //    (if present).
 //
-//    *  The global secondary indexes must have the same provisioned and maximum
-//    write capacity units.
+// Write capacity settings should be set consistently across your replica tables
+// and secondary indexes. DynamoDB strongly recommends enabling auto scaling
+// to manage the write capacity settings for all of your global tables replicas
+// and indexes.
+//
+//  If you prefer to manage write capacity settings manually, you should provision
+// equal replicated write capacity units to your replica tables. You should
+// also provision equal replicated write capacity units to matching secondary
+// indexes across your global table.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -593,8 +596,7 @@ func (c *DynamoDB) CreateGlobalTableRequest(input *CreateGlobalTableInput) (req 
 //
 // Returned Error Codes:
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
 //   Up to 10 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
@@ -712,8 +714,7 @@ func (c *DynamoDB) CreateTableRequest(input *CreateTableInput) (req *request.Req
 //   in the CREATING state.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
 //   Up to 10 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
@@ -814,8 +815,7 @@ func (c *DynamoDB) DeleteBackupRequest(input *DeleteBackupInput) (req *request.R
 //   table. The backups is either being created, deleted or restored to a table.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
 //   Up to 10 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
@@ -1044,8 +1044,7 @@ func (c *DynamoDB) DeleteTableRequest(input *DeleteTableInput) (req *request.Req
 //   might not be specified correctly, or its status might not be ACTIVE.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
 //   Up to 10 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
@@ -2642,8 +2641,7 @@ func (c *DynamoDB) RestoreTableFromBackupRequest(input *RestoreTableFromBackupIn
 //   table. The backups is either being created, deleted or restored to a table.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
 //   Up to 10 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
@@ -2782,8 +2780,7 @@ func (c *DynamoDB) RestoreTableToPointInTimeRequest(input *RestoreTableToPointIn
 //   A target table with the specified name is either being created or deleted.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
 //   Up to 10 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
@@ -3064,8 +3061,7 @@ func (c *DynamoDB) TagResourceRequest(input *TagResourceInput) (req *request.Req
 //
 // Returned Error Codes:
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
 //   Up to 10 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
@@ -3172,8 +3168,7 @@ func (c *DynamoDB) UntagResourceRequest(input *UntagResourceInput) (req *request
 //
 // Returned Error Codes:
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
 //   Up to 10 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
@@ -3490,8 +3485,7 @@ func (c *DynamoDB) UpdateGlobalTableSettingsRequest(input *UpdateGlobalTableSett
 //   The operation tried to access a nonexistent index.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
 //   Up to 10 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
@@ -3719,8 +3713,7 @@ func (c *DynamoDB) UpdateTableRequest(input *UpdateTableInput) (req *request.Req
 //   might not be specified correctly, or its status might not be ACTIVE.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
 //   Up to 10 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
@@ -3848,8 +3841,7 @@ func (c *DynamoDB) UpdateTimeToLiveRequest(input *UpdateTimeToLiveInput) (req *r
 //   might not be specified correctly, or its status might not be ACTIVE.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
 //   Up to 10 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
@@ -4254,7 +4246,7 @@ type BackupDetails struct {
 	// Time at which the backup was created. This is the request time of the backup.
 	//
 	// BackupCreationDateTime is a required field
-	BackupCreationDateTime *time.Time `type:"timestamp" timestampFormat:"unix" required:"true"`
+	BackupCreationDateTime *time.Time `type:"timestamp" required:"true"`
 
 	// Name of the requested backup.
 	//
@@ -4318,7 +4310,7 @@ type BackupSummary struct {
 	BackupArn *string `min:"37" type:"string"`
 
 	// Time at which the backup was created.
-	BackupCreationDateTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+	BackupCreationDateTime *time.Time `type:"timestamp"`
 
 	// Name of the specified backup.
 	BackupName *string `min:"3" type:"string"`
@@ -6312,7 +6304,8 @@ func (s *DescribeContinuousBackupsInput) SetTableName(v string) *DescribeContinu
 type DescribeContinuousBackupsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// ContinuousBackupsDescription can be one of the following : ENABLED, DISABLED.
+	// Represents the continuous backups and point in time recovery settings on
+	// the table.
 	ContinuousBackupsDescription *ContinuousBackupsDescription `type:"structure"`
 }
 
@@ -7489,7 +7482,7 @@ type GlobalTableDescription struct {
 	_ struct{} `type:"structure"`
 
 	// The creation time of the global table.
-	CreationDateTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+	CreationDateTime *time.Time `type:"timestamp"`
 
 	// The unique identifier of the global table.
 	GlobalTableArn *string `type:"string"`
@@ -7870,7 +7863,10 @@ func (s *KeysAndAttributes) SetProjectionExpression(v string) *KeysAndAttributes
 type ListBackupsInput struct {
 	_ struct{} `type:"structure"`
 
-	// LastEvaluatedBackupARN returned by the previous ListBackups call.
+	// LastEvaluatedBackupArn is the ARN of the backup last evaluated when the current
+	// page of results was returned, inclusive of the current page of results. This
+	// value may be specified as the ExclusiveStartBackupArn of a new ListBackups
+	// operation in order to fetch the next page of results.
 	ExclusiveStartBackupArn *string `min:"37" type:"string"`
 
 	// Maximum number of backups to return at once.
@@ -7880,11 +7876,11 @@ type ListBackupsInput struct {
 	TableName *string `min:"3" type:"string"`
 
 	// Only backups created after this time are listed. TimeRangeLowerBound is inclusive.
-	TimeRangeLowerBound *time.Time `type:"timestamp" timestampFormat:"unix"`
+	TimeRangeLowerBound *time.Time `type:"timestamp"`
 
 	// Only backups created before this time are listed. TimeRangeUpperBound is
 	// exclusive.
-	TimeRangeUpperBound *time.Time `type:"timestamp" timestampFormat:"unix"`
+	TimeRangeUpperBound *time.Time `type:"timestamp"`
 }
 
 // String returns the string representation
@@ -7952,7 +7948,17 @@ type ListBackupsOutput struct {
 	// List of BackupSummary objects.
 	BackupSummaries []*BackupSummary `type:"list"`
 
-	// Last evaluated BackupARN.
+	// The ARN of the backup last evaluated when the current page of results was
+	// returned, inclusive of the current page of results. This value may be specified
+	// as the ExclusiveStartBackupArn of a new ListBackups operation in order to
+	// fetch the next page of results.
+	//
+	// If LastEvaluatedBackupArn is empty, then the last page of results has been
+	// processed and there are no more results to be retrieved.
+	//
+	// If LastEvaluatedBackupArn is not empty, this may or may not indicate there
+	// is more data to be returned. All results are guaranteed to have been returned
+	// if and only if no value for LastEvaluatedBackupArn is returned.
 	LastEvaluatedBackupArn *string `min:"37" type:"string"`
 }
 
@@ -8507,10 +8513,10 @@ type PointInTimeRecoveryDescription struct {
 
 	// Specifies the earliest point in time you can restore your table to. It You
 	// can restore your table to any point in time during the last 35 days.
-	EarliestRestorableDateTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+	EarliestRestorableDateTime *time.Time `type:"timestamp"`
 
 	// LatestRestorableDateTime is typically 5 minutes before the current time.
-	LatestRestorableDateTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+	LatestRestorableDateTime *time.Time `type:"timestamp"`
 
 	// The current state of point in time recovery:
 	//
@@ -8726,10 +8732,10 @@ type ProvisionedThroughputDescription struct {
 	_ struct{} `type:"structure"`
 
 	// The date and time of the last provisioned throughput decrease for this table.
-	LastDecreaseDateTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+	LastDecreaseDateTime *time.Time `type:"timestamp"`
 
 	// The date and time of the last provisioned throughput increase for this table.
-	LastIncreaseDateTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+	LastIncreaseDateTime *time.Time `type:"timestamp"`
 
 	// The number of provisioned throughput decreases for this table during this
 	// UTC calendar day. For current maximums on provisioned throughput decreases,
@@ -10058,7 +10064,7 @@ type RestoreSummary struct {
 	// Point in time or source backup time.
 	//
 	// RestoreDateTime is a required field
-	RestoreDateTime *time.Time `type:"timestamp" timestampFormat:"unix" required:"true"`
+	RestoreDateTime *time.Time `type:"timestamp" required:"true"`
 
 	// Indicates if a restore is in progress or not.
 	//
@@ -10191,7 +10197,7 @@ type RestoreTableToPointInTimeInput struct {
 	_ struct{} `type:"structure"`
 
 	// Time in the past to restore the table to.
-	RestoreDateTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+	RestoreDateTime *time.Time `type:"timestamp"`
 
 	// Name of the source table that is being restored.
 	//
@@ -10291,6 +10297,16 @@ func (s *RestoreTableToPointInTimeOutput) SetTableDescription(v *TableDescriptio
 type SSEDescription struct {
 	_ struct{} `type:"structure"`
 
+	// The KMS master key ARN used for the KMS encryption.
+	KMSMasterKeyArn *string `type:"string"`
+
+	// Server-side encryption type:
+	//
+	//    * AES256 - Server-side encryption which uses the AES256 algorithm.
+	//
+	//    * KMS - Server-side encryption which uses AWS Key Management Service.
+	SSEType *string `type:"string" enum:"SSEType"`
+
 	// The current state of server-side encryption:
 	//
 	//    * ENABLING - Server-side encryption is being enabled.
@@ -10311,6 +10327,18 @@ func (s SSEDescription) String() string {
 // GoString returns the string representation
 func (s SSEDescription) GoString() string {
 	return s.String()
+}
+
+// SetKMSMasterKeyArn sets the KMSMasterKeyArn field's value.
+func (s *SSEDescription) SetKMSMasterKeyArn(v string) *SSEDescription {
+	s.KMSMasterKeyArn = &v
+	return s
+}
+
+// SetSSEType sets the SSEType field's value.
+func (s *SSEDescription) SetSSEType(v string) *SSEDescription {
+	s.SSEType = &v
+	return s
 }
 
 // SetStatus sets the Status field's value.
@@ -10859,7 +10887,7 @@ type SourceTableDetails struct {
 	// Time when the source table was created.
 	//
 	// TableCreationDateTime is a required field
-	TableCreationDateTime *time.Time `type:"timestamp" timestampFormat:"unix" required:"true"`
+	TableCreationDateTime *time.Time `type:"timestamp" required:"true"`
 
 	// Unique identifier for the table for which the backup was created.
 	//
@@ -11063,7 +11091,7 @@ type TableDescription struct {
 
 	// The date and time when the table was created, in UNIX epoch time (http://www.epochconverter.com/)
 	// format.
-	CreationDateTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+	CreationDateTime *time.Time `type:"timestamp"`
 
 	// The global secondary indexes, if any, on the table. Each index is scoped
 	// to a given partition key value. Each element is composed of:
@@ -12928,6 +12956,14 @@ const (
 
 	// SSEStatusDisabled is a SSEStatus enum value
 	SSEStatusDisabled = "DISABLED"
+)
+
+const (
+	// SSETypeAes256 is a SSEType enum value
+	SSETypeAes256 = "AES256"
+
+	// SSETypeKms is a SSEType enum value
+	SSETypeKms = "KMS"
 )
 
 const (
