@@ -10,7 +10,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi"
 	"github.com/kylelemons/godebug/pretty"
 	h "github.com/kynrai/lilith/internal/http"
 	"github.com/kynrai/lilith/pkg/postgres_example"
@@ -51,7 +51,7 @@ func TestGetThing(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			r := mux.NewRouter()
+			r := chi.NewRouter()
 			r.Handle("/thing/{id}", handlers.GetThing(tc.getter))
 			req := httptest.NewRequest(http.MethodGet, "https://example.com/thing/"+tc.id, nil)
 			rw := httptest.NewRecorder()
@@ -115,7 +115,7 @@ func TestSetThing(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			r := mux.NewRouter()
+			r := chi.NewRouter()
 			r.Handle("/thing", handlers.PutThing(tc.setter))
 			req := httptest.NewRequest(http.MethodPost, "/thing", bytes.NewBufferString(tc.thing))
 			rw := httptest.NewRecorder()

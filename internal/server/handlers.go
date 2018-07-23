@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"net/http"
 
 	h "github.com/kynrai/lilith/internal/http"
@@ -8,7 +9,12 @@ import (
 
 func Health() h.ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request) error {
-		w.Write([]byte("OK"))
-		return nil
+		type resp struct {
+			Health string `json:"health"`
+		}
+		return json.NewEncoder(w).Encode(
+			resp{
+				Health: "OK",
+			})
 	}
 }

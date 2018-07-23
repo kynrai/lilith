@@ -41,6 +41,15 @@
   version = "v1.14.31"
 
 [[projects]]
+  name = "github.com/go-chi/chi"
+  packages = [
+    ".",
+    "middleware"
+  ]
+  revision = "e83ac2304db3c50cf03d96a2fcd39009d458bc35"
+  version = "v3.3.2"
+
+[[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
   revision = "358ee7663966325963d4e8b2e1fbd570c5195153"
@@ -68,22 +77,10 @@
   version = "v2.0.0"
 
 [[projects]]
-  name = "github.com/gorilla/context"
-  packages = ["."]
-  revision = "08b5f424b9271eedf6f9f0ce86cb9396ed337a42"
-  version = "v1.1.1"
-
-[[projects]]
   name = "github.com/gorilla/handlers"
   packages = ["."]
   revision = "90663712d74cb411cbef281bc1e08c19d1a76145"
   version = "v1.3.0"
-
-[[projects]]
-  name = "github.com/gorilla/mux"
-  packages = ["."]
-  revision = "e3702bed27f0d39777b0b37b664b6280e8ef8fbf"
-  version = "v1.6.2"
 
 [[projects]]
   name = "github.com/jackc/pgx"
@@ -264,6 +261,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8d035254690f4949fcf7ea2fab6b0f7dd030a162cc732e06598eea69c70b2a6c"
+  inputs-digest = "6bca38def0a51cabca0dffdc4a9c24de67c055088548de713de232815d3e32c3"
   solver-name = "gps-cdcl"
   solver-version = 1
