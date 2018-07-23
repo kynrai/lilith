@@ -9865,6 +9865,10 @@
         "ReleaseTime":{
           "shape":"DateTime",
           "locationName":"releaseTime"
+        },
+        "Tags":{
+          "shape":"TagList",
+          "locationName":"tagSet"
         }
       }
     },
@@ -11670,6 +11674,7 @@
         "i3.4xlarge",
         "i3.8xlarge",
         "i3.16xlarge",
+        "i3.metal",
         "hi1.4xlarge",
         "hs1.8xlarge",
         "c1.medium",
@@ -11690,6 +11695,12 @@
         "c5.4xlarge",
         "c5.9xlarge",
         "c5.18xlarge",
+        "c5d.large",
+        "c5d.xlarge",
+        "c5d.2xlarge",
+        "c5d.4xlarge",
+        "c5d.9xlarge",
+        "c5d.18xlarge",
         "cc1.4xlarge",
         "cc2.8xlarge",
         "g2.2xlarge",
@@ -11716,6 +11727,12 @@
         "m5.4xlarge",
         "m5.12xlarge",
         "m5.24xlarge",
+        "m5d.large",
+        "m5d.xlarge",
+        "m5d.2xlarge",
+        "m5d.4xlarge",
+        "m5d.12xlarge",
+        "m5d.24xlarge",
         "h1.2xlarge",
         "h1.4xlarge",
         "h1.8xlarge",
@@ -12127,6 +12144,26 @@
       "member":{
         "shape":"LaunchTemplateConfig",
         "locationName":"item"
+      }
+    },
+    "LaunchTemplateCpuOptions":{
+      "type":"structure",
+      "members":{
+        "CoreCount":{
+          "shape":"Integer",
+          "locationName":"coreCount"
+        },
+        "ThreadsPerCore":{
+          "shape":"Integer",
+          "locationName":"threadsPerCore"
+        }
+      }
+    },
+    "LaunchTemplateCpuOptionsRequest":{
+      "type":"structure",
+      "members":{
+        "CoreCount":{"shape":"Integer"},
+        "ThreadsPerCore":{"shape":"Integer"}
       }
     },
     "LaunchTemplateEbsBlockDevice":{
@@ -14200,7 +14237,6 @@
     },
     "PrivateIpAddressSpecification":{
       "type":"structure",
-      "required":["PrivateIpAddress"],
       "members":{
         "Primary":{
           "shape":"Boolean",
@@ -14990,7 +15026,8 @@
           "locationName":"SecurityGroup"
         },
         "InstanceMarketOptions":{"shape":"LaunchTemplateInstanceMarketOptionsRequest"},
-        "CreditSpecification":{"shape":"CreditSpecificationRequest"}
+        "CreditSpecification":{"shape":"CreditSpecificationRequest"},
+        "CpuOptions":{"shape":"LaunchTemplateCpuOptionsRequest"}
       }
     },
     "RequestSpotFleetRequest":{
@@ -15828,6 +15865,10 @@
         "CreditSpecification":{
           "shape":"CreditSpecification",
           "locationName":"creditSpecification"
+        },
+        "CpuOptions":{
+          "shape":"LaunchTemplateCpuOptions",
+          "locationName":"cpuOptions"
         }
       }
     },

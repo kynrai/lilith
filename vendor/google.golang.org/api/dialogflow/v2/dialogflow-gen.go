@@ -1,5 +1,7 @@
 // Package dialogflow provides access to the Dialogflow API.
 //
+// This package is DEPRECATED. Use package cloud.google.com/go/dialogflow/apiv2 instead.
+//
 // See https://cloud.google.com/dialogflow-enterprise/
 //
 // Usage example:
@@ -759,8 +761,9 @@ func (s *GoogleCloudDialogflowV2DetectIntentRequest) MarshalJSON() ([]byte, erro
 // GoogleCloudDialogflowV2DetectIntentResponse: The message returned
 // from the DetectIntent method.
 type GoogleCloudDialogflowV2DetectIntentResponse struct {
-	// QueryResult: The results of the conversational query or event
-	// processing.
+	// QueryResult: The selected results of the conversational query or
+	// event processing.
+	// See `alternative_query_results` for additional potential results.
 	QueryResult *GoogleCloudDialogflowV2QueryResult `json:"queryResult,omitempty"`
 
 	// ResponseId: The unique identifier of the response. It can be used
@@ -996,11 +999,11 @@ func (s *GoogleCloudDialogflowV2EventInput) MarshalJSON() ([]byte, error) {
 // GoogleCloudDialogflowV2ExportAgentRequest: The request message for
 // Agents.ExportAgent.
 type GoogleCloudDialogflowV2ExportAgentRequest struct {
-	// AgentUri: Optional. The Google Cloud Storage URI to export the agent
-	// to.
-	// Note: The URI must start with
-	// "gs://". If left unspecified, the serialized agent is returned
-	// inline.
+	// AgentUri: Optional. The
+	// [Google Cloud Storage](https://cloud.google.com/storage/docs/)
+	// URI to export the agent to.
+	// The format of this URI must be `gs://<bucket-name>/<object-name>`.
+	// If left unspecified, the serialized agent is returned inline.
 	AgentUri string `json:"agentUri,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "AgentUri") to
@@ -1033,11 +1036,10 @@ type GoogleCloudDialogflowV2ExportAgentResponse struct {
 	//
 	// Example for how to export an agent to a zip file via a command
 	// line:
+	// <pre>curl \
 	//
-	// curl \
-	//
-	// 'https://dialogflow.googleapis.com/v2/projects/<project_name>/agent:ex
-	// port'\
+	// 'https://dialogflow.googleapis.com/v2/projects/&lt;project_name&gt;/ag
+	// ent:export'\
 	//   -X POST \
 	//   -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
 	//   -H 'Accept: application/json' \
@@ -1046,7 +1048,7 @@ type GoogleCloudDialogflowV2ExportAgentResponse struct {
 	//   --data-binary '{}' \
 	// | grep agentContent | sed -e 's/.*"agentContent": "\([^"]*\)".*/\1/'
 	// \
-	// | base64 --decode > <agent zip file>
+	// | base64 --decode > &lt;agent zip file&gt;</pre>
 	AgentContent string `json:"agentContent,omitempty"`
 
 	// AgentUri: The URI to a file containing the exported agent. This field
@@ -1083,19 +1085,18 @@ type GoogleCloudDialogflowV2ImportAgentRequest struct {
 	// AgentContent: The agent to import.
 	//
 	// Example for how to import an agent via the command line:
+	// <pre>curl \
 	//
-	// curl \
-	//
-	// 'https://dialogflow.googleapis.com/v2/projects/<project_name>/agent:im
-	// port\
+	// 'https://dialogflow.googleapis.com/v2/projects/&lt;project_name&gt;/ag
+	// ent:import\
 	//    -X POST \
 	//    -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
 	//    -H 'Accept: application/json' \
 	//    -H 'Content-Type: application/json' \
 	//    --compressed \
 	//    --data-binary "{
-	//       'agentContent': '$(cat <agent zip file> | base64 -w 0)'
-	//    }"
+	//       'agentContent': '$(cat &lt;agent zip file&gt; | base64 -w 0)'
+	//    }"</pre>
 	AgentContent string `json:"agentContent,omitempty"`
 
 	// AgentUri: The URI to a Google Cloud Storage file containing the agent
@@ -2629,12 +2630,33 @@ type GoogleCloudDialogflowV2OriginalDetectIntentRequest struct {
 	// Payload: Optional. This field is set to the value of
 	// `QueryParameters.payload` field
 	// passed in the request.
+	//
+	// This field is used for the telephony gateway. It should have
+	// a
+	// structure similar to this JSON message:
+	// <pre>{
+	//  "telephony": {
+	//  "caller_id": "+18558363987"
+	// }</pre>
+	// Note: The caller ID field (`caller_id`) will be in
+	// [E.164 format](https://en.wikipedia.org/wiki/E.164) and is not
+	// supported
+	// for standard tier agents. When the telephony gateway is used with
+	// a
+	// standard tier agent the `caller_id` field above will have a value
+	// of
+	// `REDACTED_IN_STANDARD_TIER_AGENT`.
 	Payload googleapi.RawMessage `json:"payload,omitempty"`
 
 	// Source: The source of this request, e.g., `google`, `facebook`,
 	// `slack`. It is set
 	// by Dialogflow-owned servers.
 	Source string `json:"source,omitempty"`
+
+	// Version: Optional. The version of the protocol used for this
+	// request.
+	// This field is AoG-specific.
+	Version string `json:"version,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Payload") to
 	// unconditionally include in API requests. By default, fields with
@@ -2801,6 +2823,9 @@ type GoogleCloudDialogflowV2QueryResult struct {
 	// IntentDetectionConfidence: The intent detection confidence. Values
 	// range from 0.0
 	// (completely uncertain) to 1.0 (completely certain).
+	// If there are `multiple knowledge_answers` messages, this value is set
+	// to
+	// the greatest `knowledgeAnswers.match_confidence` value in the list.
 	IntentDetectionConfidence float64 `json:"intentDetectionConfidence,omitempty"`
 
 	// LanguageCode: The language that was triggered during intent
@@ -2905,19 +2930,18 @@ type GoogleCloudDialogflowV2RestoreAgentRequest struct {
 	// AgentContent: The agent to restore.
 	//
 	// Example for how to restore an agent via the command line:
+	// <pre>curl \
 	//
-	// curl \
-	//
-	// 'https://dialogflow.googleapis.com/v2/projects/<project_name>/agent:re
-	// store\
+	// 'https://dialogflow.googleapis.com/v2/projects/&lt;project_name&gt;/ag
+	// ent:restore\
 	//    -X POST \
 	//    -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
 	//    -H 'Accept: application/json' \
 	//    -H 'Content-Type: application/json' \
 	//    --compressed \
 	//    --data-binary "{
-	//        'agentContent': '$(cat <agent zip file> | base64 -w 0)'
-	//    }" \
+	//        'agentContent': '$(cat &lt;agent zip file&gt; | base64 -w 0)'
+	//    }"</pre>
 	AgentContent string `json:"agentContent,omitempty"`
 
 	// AgentUri: The URI to a Google Cloud Storage file containing the agent
@@ -3309,16 +3333,13 @@ type GoogleCloudDialogflowV2beta1Context struct {
 	// Format:
 	// `projects/<Project ID>/agent/sessions/<Session ID>/contexts/<Context
 	// ID>`,
-	// or
-	// `projects/<Project ID>/agent/environments/<Environment
+	// or `projects/<Project ID>/agent/environments/<Environment
 	// ID>/users/<User
-	// ID>/sessions/<Session ID>/contexts/<Context ID>`. Note: Environments
-	// and
-	// users are under construction and will be available soon. The Context
-	// ID is
-	// always converted to lowercase. If <Environment ID> is not specified,
+	// ID>/sessions/<Session ID>/contexts/<Context ID>`. The `Context ID`
+	// is
+	// always converted to lowercase. If `Environment ID` is not specified,
 	// we
-	// assume default 'draft' environment. If <User ID> is not specified,
+	// assume default 'draft' environment. If `User ID` is not specified,
 	// we
 	// assume default '-' user.
 	Name string `json:"name,omitempty"`
@@ -3520,11 +3541,10 @@ type GoogleCloudDialogflowV2beta1ExportAgentResponse struct {
 	//
 	// Example for how to export an agent to a zip file via a command
 	// line:
+	// <pre>curl \
 	//
-	// curl \
-	//
-	// 'https://dialogflow.googleapis.com/v2beta1/projects/<project_name>/age
-	// nt:export'\
+	// 'https://dialogflow.googleapis.com/v2beta1/projects/&lt;project_name&g
+	// t;/agent:export'\
 	//   -X POST \
 	//   -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
 	//   -H 'Accept: application/json' \
@@ -3533,7 +3553,7 @@ type GoogleCloudDialogflowV2beta1ExportAgentResponse struct {
 	//   --data-binary '{}' \
 	// | grep agentContent | sed -e 's/.*"agentContent": "\([^"]*\)".*/\1/'
 	// \
-	// | base64 --decode > <agent zip file>
+	// | base64 --decode > &lt;agent zip file&gt;</pre>
 	AgentContent string `json:"agentContent,omitempty"`
 
 	// AgentUri: The URI to a file containing the exported agent. This field
@@ -3703,9 +3723,9 @@ type GoogleCloudDialogflowV2beta1Intent struct {
 	// Also,
 	// auto-markup in the UI is turned off.
 	// DEPRECATED! Please use `ml_disabled` field instead.
-	// NOTE: If neither `ml_enabled` nor `ml_disabled` field is set, then
-	// the
-	// default value is determined as follows:
+	// NOTE: If both `ml_enabled` and `ml_disabled` are either not set or
+	// false,
+	// then the default value is determined as follows:
 	// - Before April 15th, 2018 the default is:
 	//   ml_enabled = false / ml_disabled = true.
 	// - After April 15th, 2018 the default is:
@@ -4229,9 +4249,10 @@ func (s *GoogleCloudDialogflowV2beta1IntentMessageCarouselSelectItem) MarshalJSO
 // GoogleCloudDialogflowV2beta1IntentMessageImage: The image response
 // message.
 type GoogleCloudDialogflowV2beta1IntentMessageImage struct {
-	// AccessibilityText: Optional. A text description of the image to be
-	// used for accessibility,
-	// e.g., screen readers.
+	// AccessibilityText: A text description of the image to be used for
+	// accessibility,
+	// e.g., screen readers. Required if image_uri is set for
+	// CarouselSelect.
 	AccessibilityText string `json:"accessibilityText,omitempty"`
 
 	// ImageUri: Optional. The public URI to an image file.
@@ -4819,12 +4840,33 @@ type GoogleCloudDialogflowV2beta1OriginalDetectIntentRequest struct {
 	// Payload: Optional. This field is set to the value of
 	// `QueryParameters.payload` field
 	// passed in the request.
+	//
+	// This field is used for the telephony gateway. It should have
+	// a
+	// structure similar to this JSON message:
+	// <pre>{
+	//  "telephony": {
+	//  "caller_id": "+18558363987"
+	// }</pre>
+	// Note: The caller ID field (`caller_id`) will be in
+	// [E.164 format](https://en.wikipedia.org/wiki/E.164) and is not
+	// supported
+	// for standard tier agents. When the telephony gateway is used with
+	// a
+	// standard tier agent the `caller_id` field above will have a value
+	// of
+	// `REDACTED_IN_STANDARD_TIER_AGENT`.
 	Payload googleapi.RawMessage `json:"payload,omitempty"`
 
 	// Source: The source of this request, e.g., `google`, `facebook`,
 	// `slack`. It is set
 	// by Dialogflow-owned servers.
 	Source string `json:"source,omitempty"`
+
+	// Version: Optional. The version of the protocol used for this
+	// request.
+	// This field is AoG-specific.
+	Version string `json:"version,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Payload") to
 	// unconditionally include in API requests. By default, fields with
@@ -4887,6 +4929,9 @@ type GoogleCloudDialogflowV2beta1QueryResult struct {
 	// IntentDetectionConfidence: The intent detection confidence. Values
 	// range from 0.0
 	// (completely uncertain) to 1.0 (completely certain).
+	// If there are `multiple knowledge_answers` messages, this value is set
+	// to
+	// the greatest `knowledgeAnswers.match_confidence` value in the list.
 	IntentDetectionConfidence float64 `json:"intentDetectionConfidence,omitempty"`
 
 	// LanguageCode: The language that was triggered during intent

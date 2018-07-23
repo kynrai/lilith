@@ -1066,7 +1066,7 @@ func (s *Correction) MarshalJSON() ([]byte, error) {
 
 // Creative: A creative and its classification data.
 //
-// Next ID: 35
+// Next ID: 36
 type Creative struct {
 	// AccountId: The account that this creative belongs to.
 	// Can be used to filter the response of the
@@ -1592,6 +1592,9 @@ type Disapproval struct {
 	//   "MISUSE_BY_OMID_SCRIPT" - Misuse by an Open Measurement SDK script.
 	//   "NON_WHITELISTED_OMID_VENDOR" - Use of an Open Measurement SDK
 	// vendor not on approved whitelist.
+	//   "DESTINATION_EXPERIENCE" - Unacceptable landing page.
+	//   "UNSUPPORTED_LANGUAGE" - Unsupported language.
+	//   "NON_SSL_COMPLIANT" - Non-SSL compliant.
 	Reason string `json:"reason,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Details") to
@@ -3273,11 +3276,22 @@ type ServingRestriction struct {
 	// Contexts: The contexts for the restriction.
 	Contexts []*ServingContext `json:"contexts,omitempty"`
 
-	// DisapprovalReasons: Any disapprovals bound to this restriction.
+	// Disapproval: Disapproval bound to this restriction.
 	// Only present if status=DISAPPROVED.
 	// Can be used to filter the response of the
 	// creatives.list
 	// method.
+	Disapproval *Disapproval `json:"disapproval,omitempty"`
+
+	// DisapprovalReasons: Any disapprovals bound to this restriction.
+	// Only present if status=DISAPPROVED.
+	// Can be used to filter the response of
+	// the
+	// creatives.list
+	// method.
+	// Deprecated; please use
+	// disapproval
+	// field instead.
 	DisapprovalReasons []*Disapproval `json:"disapprovalReasons,omitempty"`
 
 	// Status: The status of the creative in this context (for example, it
@@ -5438,7 +5452,7 @@ func (c *AccountsCreativesListCall) PageToken(pageToken string) *AccountsCreativ
 // Query sets the optional parameter "query": An optional query string
 // to filter creatives. If no filter is specified,
 // all active creatives will be returned.
-// Supported queries
+// <p>Supported queries
 // are:
 // <ul>
 // <li>accountId=<i>account_id_string</i>
@@ -5583,7 +5597,7 @@ func (c *AccountsCreativesListCall) Do(opts ...googleapi.CallOption) (*ListCreat
 	//       "type": "string"
 	//     },
 	//     "query": {
-	//       "description": "An optional query string to filter creatives. If no filter is specified,\nall active creatives will be returned.\nSupported queries are:\n\u003cul\u003e\n\u003cli\u003eaccountId=\u003ci\u003eaccount_id_string\u003c/i\u003e\n\u003cli\u003ecreativeId=\u003ci\u003ecreative_id_string\u003c/i\u003e\n\u003cli\u003edealsStatus: {approved, conditionally_approved, disapproved,\n                   not_checked}\n\u003cli\u003eopenAuctionStatus: {approved, conditionally_approved, disapproved,\n                          not_checked}\n\u003cli\u003eattribute: {a numeric attribute from the list of attributes}\n\u003cli\u003edisapprovalReason: {a reason from\nDisapprovalReason}\n\u003c/ul\u003e\nExample: 'accountId=12345 AND (dealsStatus:disapproved AND\ndisapprovalReason:unacceptable_content) OR attribute:47'",
+	//       "description": "An optional query string to filter creatives. If no filter is specified,\nall active creatives will be returned.\n\u003cp\u003eSupported queries are:\n\u003cul\u003e\n\u003cli\u003eaccountId=\u003ci\u003eaccount_id_string\u003c/i\u003e\n\u003cli\u003ecreativeId=\u003ci\u003ecreative_id_string\u003c/i\u003e\n\u003cli\u003edealsStatus: {approved, conditionally_approved, disapproved,\n                   not_checked}\n\u003cli\u003eopenAuctionStatus: {approved, conditionally_approved, disapproved,\n                          not_checked}\n\u003cli\u003eattribute: {a numeric attribute from the list of attributes}\n\u003cli\u003edisapprovalReason: {a reason from\nDisapprovalReason}\n\u003c/ul\u003e\nExample: 'accountId=12345 AND (dealsStatus:disapproved AND\ndisapprovalReason:unacceptable_content) OR attribute:47'",
 	//       "location": "query",
 	//       "type": "string"
 	//     }

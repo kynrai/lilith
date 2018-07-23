@@ -1,4 +1,4 @@
-// Copyright 2018 Google Inc. All Rights Reserved.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,6 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+// +build go1.8
 
 package proxy
 
@@ -65,5 +67,48 @@ func TestRequestBody(t *testing.T) {
 
 	if !rb1.equal(rb2) {
 		t.Error("equal returned false, want true")
+	}
+}
+
+func TestHeadersMatch(t *testing.T) {
+	for _, test := range []struct {
+		h1, h2 http.Header
+		want   bool
+	}{
+		{
+			http.Header{"A": {"x"}, "B": {"y", "z"}},
+			http.Header{"A": {"x"}, "B": {"y", "z"}},
+			true,
+		},
+		{
+			http.Header{"A": {"x"}, "B": {"y", "z"}},
+			http.Header{"A": {"x"}, "B": {"w"}},
+			false,
+		},
+		{
+			http.Header{"A": {"x"}, "B": {"y", "z"}, "I": {"foo"}},
+			http.Header{"A": {"x"}, "B": {"y", "z"}, "I": {"bar"}},
+			true,
+		},
+		{
+			http.Header{"A": {"x"}, "B": {"y", "z"}},
+			http.Header{"A": {"x"}, "B": {"y", "z"}, "I": {"bar"}},
+			true,
+		},
+		{
+			http.Header{"A": {"x"}, "B": {"y", "z"}, "I": {"foo"}},
+			http.Header{"A": {"x"}, "I": {"bar"}},
+			false,
+		},
+		{
+			http.Header{"A": {"x"}, "I": {"foo"}},
+			http.Header{"A": {"x"}, "B": {"y", "z"}, "I": {"bar"}},
+			false,
+		},
+	} {
+		got := headersMatch(test.h1, test.h2, map[string]bool{"I": true})
+		if got != test.want {
+			t.Errorf("%v, %v: got %t, want %t", test.h1, test.h2, got, test.want)
+		}
 	}
 }

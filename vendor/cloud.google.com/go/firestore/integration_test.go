@@ -1,4 +1,4 @@
-// Copyright 2017 Google Inc. All Rights Reserved.
+// Copyright 2017 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import (
 
 	"cloud.google.com/go/internal/pretty"
 	"cloud.google.com/go/internal/testutil"
+	"cloud.google.com/go/internal/uid"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
@@ -55,7 +56,7 @@ const (
 var (
 	iClient       *Client
 	iColl         *CollectionRef
-	collectionIDs = testutil.NewUIDSpace("go-integration-test")
+	collectionIDs = uid.NewSpace("go-integration-test", nil)
 )
 
 func initIntegrationTest() {

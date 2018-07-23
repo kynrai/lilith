@@ -1,4 +1,4 @@
-// Copyright 2018 Google Inc. All Rights Reserved.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// +build go1.8
+
 package proxy
 
 import (
@@ -21,12 +23,13 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"mime"
 	"mime/multipart"
 	"net/http"
+	"reflect"
 	"strings"
 
-	"github.com/google/martian/har"
 	"github.com/google/martian/martianlog"
 )
 
@@ -36,11 +39,15 @@ func ForReplaying(filename string, port int) (*Proxy, error) {
 	if err != nil {
 		return nil, err
 	}
-	calls, err := readLog(filename)
+	calls, initial, err := readLog(filename)
 	if err != nil {
 		return nil, err
 	}
-	p.mproxy.SetRoundTripper(replayRoundTripper{calls: calls})
+	p.mproxy.SetRoundTripper(replayRoundTripper{
+		calls:         calls,
+		ignoreHeaders: p.ignoreHeaders,
+	})
+	p.Initial = initial
 
 	// Debug logging.
 	// TODO(jba): factor out from here and ForRecording.
@@ -57,24 +64,28 @@ func ForReplaying(filename string, port int) (*Proxy, error) {
 
 // A call is an HTTP request and its matching response.
 type call struct {
-	req     *har.Request
+	req     *Request
 	reqBody *requestBody // parsed request body
-	res     *har.Response
+	res     *Response
 }
 
-func readLog(filename string) ([]*call, error) {
+func readLog(filename string) ([]*call, []byte, error) {
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	var h har.HAR
-	if err := json.Unmarshal(bytes, &h); err != nil {
-		return nil, err
+	var lg Log
+	if err := json.Unmarshal(bytes, &lg); err != nil {
+		return nil, nil, fmt.Errorf("%s: %v", filename, err)
+	}
+	if lg.Version != LogVersion {
+		return nil, nil, fmt.Errorf("httpreplay proxy: read log version %s but current version is %s",
+			lg.Version, LogVersion)
 	}
 	ignoreIDs := map[string]bool{} // IDs of requests to ignore
 	callsByID := map[string]*call{}
 	var calls []*call
-	for _, e := range h.Log.Entries {
+	for _, e := range lg.Entries {
 		if ignoreIDs[e.ID] {
 			continue
 		}
@@ -82,15 +93,15 @@ func readLog(filename string) ([]*call, error) {
 		switch {
 		case !ok:
 			if e.Request == nil {
-				return nil, fmt.Errorf("first entry for ID %s does not have a request", e.ID)
+				return nil, nil, fmt.Errorf("first entry for ID %s does not have a request", e.ID)
 			}
 			if e.Request.Method == "CONNECT" {
 				// Ignore CONNECT methods.
 				ignoreIDs[e.ID] = true
 			} else {
-				reqBody, err := newRequestBodyFromHAR(e.Request)
+				reqBody, err := newRequestBodyFromLog(e.Request)
 				if err != nil {
-					return nil, err
+					return nil, nil, err
 				}
 				c := &call{e.Request, reqBody, e.Response}
 				calls = append(calls, c)
@@ -98,25 +109,26 @@ func readLog(filename string) ([]*call, error) {
 			}
 		case e.Request != nil:
 			if e.Response != nil {
-				return nil, errors.New("HAR entry has both request and response")
+				return nil, nil, errors.New("HAR entry has both request and response")
 			}
 			c.req = e.Request
 		case e.Response != nil:
 			c.res = e.Response
 		default:
-			return nil, errors.New("HAR entry has neither request nor response")
+			return nil, nil, errors.New("HAR entry has neither request nor response")
 		}
 	}
 	for _, c := range calls {
 		if c.req == nil || c.res == nil {
-			return nil, fmt.Errorf("missing request or response: %+v", c)
+			return nil, nil, fmt.Errorf("missing request or response: %+v", c)
 		}
 	}
-	return calls, nil
+	return calls, lg.Initial, nil
 }
 
 type replayRoundTripper struct {
-	calls []*call
+	calls         []*call
+	ignoreHeaders map[string]bool
 }
 
 func (r replayRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -128,40 +140,54 @@ func (r replayRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 		if call == nil {
 			continue
 		}
-		if requestsMatch(req, reqBody, call.req, call.reqBody) {
+		if requestsMatch(req, reqBody, call.req, call.reqBody, r.ignoreHeaders) {
 			r.calls[i] = nil // nil out this call so we don't reuse it
-			res := harResponseToHTTPResponse(call.res)
-			res.Request = req
-			return res, nil
+			return toHTTPResponse(call.res, req), nil
 		}
 	}
 	return nil, fmt.Errorf("no matching request for %+v", req)
 }
 
+// Headers that shouldn't be compared, because they may differ on different executions
+// of the same code, or may not be present during record or replay.
+var ignoreHeaders = map[string]bool{}
+
+func init() {
+	// Sensitive headers are redacted in the log, so they won't be equal to incoming values.
+	for h := range sensitiveHeaders {
+		ignoreHeaders[h] = true
+	}
+	for _, h := range []string{
+		"Content-Type", // handled by requestBody
+		"Connection",
+		"Date",
+		"Host",
+		"Transfer-Encoding",
+		"Via",
+		"X-Forwarded-For",
+		"X-Forwarded-Host",
+		"X-Forwarded-Proto",
+		"X-Forwarded-Url",
+		"X-Cloud-Trace-Context", // OpenCensus traces have a random ID
+		"X-Goog-Api-Client",     // can differ for, e.g., different Go versions
+	} {
+		ignoreHeaders[h] = true
+	}
+}
+
 // Report whether the incoming request in matches the candidate request cand.
-func requestsMatch(in *http.Request, inBody *requestBody, cand *har.Request, candBody *requestBody) bool {
-	// TODO(jba): compare headers?
+func requestsMatch(in *http.Request, inBody *requestBody, cand *Request, candBody *requestBody, ignoreHeaders map[string]bool) bool {
 	if in.Method != cand.Method {
 		return false
 	}
 	if in.URL.String() != cand.URL {
 		return false
 	}
-	return inBody.equal(candBody)
-}
-
-// Convert a HAR response to a Go http.Response.
-// HAR (Http ARchive) is a standard for storing HTTP interactions.
-// See http://www.softwareishard.com/blog/har-12-spec.
-func harResponseToHTTPResponse(hr *har.Response) *http.Response {
-	return &http.Response{
-		StatusCode: hr.Status,
-		Status:     hr.StatusText,
-		Proto:      hr.HTTPVersion,
-		// TODO(jba): headers?
-		Body:          ioutil.NopCloser(bytes.NewReader(hr.Content.Text)),
-		ContentLength: int64(len(hr.Content.Text)),
+	if !inBody.equal(candBody) {
+		return false
 	}
+	// Check headers last. See DebugHeaders.
+	return headersMatch(in.Header, cand.Header, ignoreHeaders)
 }
 
 // A requestBody represents the body of a request. If the content type is multipart, the
@@ -179,18 +205,11 @@ func newRequestBodyFromHTTP(req *http.Request) (*requestBody, error) {
 	return newRequestBody(req.Header.Get("Content-Type"), req.Body)
 }
 
-func newRequestBodyFromHAR(req *har.Request) (*requestBody, error) {
-	if req.PostData == nil {
+func newRequestBodyFromLog(req *Request) (*requestBody, error) {
+	if req.Body == nil {
 		return nil, nil
 	}
-	var cth string
-	for _, h := range req.Headers {
-		if h.Name == "Content-Type" {
-			cth = h.Value
-			break
-		}
-	}
-	return newRequestBody(cth, strings.NewReader(req.PostData.Text))
+	return newRequestBody(req.Header.Get("Content-Type"), bytes.NewReader(req.Body))
 }
 
 // newRequestBody parses the Content-Type header, reads the body, and splits it into
@@ -247,6 +266,44 @@ func (r1 *requestBody) equal(r2 *requestBody) bool {
 	}
 	for i, p1 := range r1.parts {
 		if !bytes.Equal(p1, r2.parts[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+// DebugHeaders helps to determine whether a header should be ignored.
+// When true, if requests have the same method, URL and body but differ
+// in a header, the first mismatched header is logged.
+var DebugHeaders = false
+
+func headersMatch(in, cand http.Header, ignores map[string]bool) bool {
+	for k1, v1 := range in {
+		if ignores[k1] {
+			continue
+		}
+		v2 := cand[k1]
+		if v2 == nil {
+			if DebugHeaders {
+				log.Printf("header %s: present in incoming request but not candidate", k1)
+			}
+			return false
+		}
+		if !reflect.DeepEqual(v1, v2) {
+			if DebugHeaders {
+				log.Printf("header %s: incoming %v, candidate %v", k1, v1, v2)
+			}
+			return false
+		}
+	}
+	for k2 := range cand {
+		if ignores[k2] {
+			continue
+		}
+		if in[k2] == nil {
+			if DebugHeaders {
+				log.Printf("header %s: not in incoming request but present in candidate", k2)
+			}
 			return false
 		}
 	}

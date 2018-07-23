@@ -1,4 +1,4 @@
-// Copyright 2018 Google Inc. All Rights Reserved.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,6 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+// +build go1.8
 
 // The proxy package provides a record/replay HTTP proxy. It is designed to support
 // both an in-memory API (cloud.google.com/go/httpreplay) and a standalone server
@@ -33,7 +35,6 @@ import (
 
 	"github.com/google/martian"
 	"github.com/google/martian/fifo"
-	"github.com/google/martian/har"
 	"github.com/google/martian/httpspec"
 	"github.com/google/martian/martianlog"
 	"github.com/google/martian/mitm"
@@ -47,9 +48,13 @@ type Proxy struct {
 	// The URL of the proxy.
 	URL *url.URL
 
-	mproxy   *martian.Proxy
-	filename string      // for log
-	logger   *har.Logger // for recording only
+	// Initial state of the client.
+	Initial []byte
+
+	mproxy        *martian.Proxy
+	filename      string          // for log
+	logger        *Logger         // for recording only
+	ignoreHeaders map[string]bool // headers the user has asked to ignore
 }
 
 // ForRecording returns a Proxy configured to record.
@@ -58,15 +63,6 @@ func ForRecording(filename string, port int) (*Proxy, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Configure the transport for the proxy's outgoing traffic.
-	p.mproxy.SetRoundTripper(&http.Transport{
-		Dial: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).Dial,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: time.Second,
-	})
 
 	// Construct a group that performs the standard proxy stack of request/response
 	// modifications.
@@ -79,9 +75,8 @@ func ForRecording(filename string, port int) (*Proxy, error) {
 	skipAuth := skipLoggingByHost("accounts.google.com")
 	logGroup.AddRequestModifier(skipAuth)
 	logGroup.AddResponseModifier(skipAuth)
-	p.logger = har.NewLogger()
-	logGroup.AddRequestModifier(martian.RequestModifierFunc(
-		func(req *http.Request) error { return redactHeadersThenLog(req, p.logger) }))
+	p.logger = NewLogger()
+	logGroup.AddRequestModifier(p.logger)
 	logGroup.AddResponseModifier(p.logger)
 
 	stack.AddRequestModifier(logGroup)
@@ -97,6 +92,12 @@ func ForRecording(filename string, port int) (*Proxy, error) {
 		return nil, err
 	}
 	return p, nil
+}
+
+type hideTransport http.Transport
+
+func (t *hideTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	return (*http.Transport)(t).RoundTrip(req)
 }
 
 func newProxy(filename string) (*Proxy, error) {
@@ -118,15 +119,20 @@ func newProxy(filename string) (*Proxy, error) {
 		return nil, err
 	}
 	mproxy.SetMITM(mc)
+	ih := map[string]bool{}
+	for k, v := range ignoreHeaders {
+		ih[k] = v
+	}
 	return &Proxy{
-		mproxy:   mproxy,
-		CACert:   x509c,
-		filename: filename,
+		mproxy:        mproxy,
+		CACert:        x509c,
+		filename:      filename,
+		ignoreHeaders: ih,
 	}, nil
 }
 
 func (p *Proxy) start(port int) error {
-	l, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	l, err := net.Listen("tcp4", fmt.Sprintf(":%d", port))
 	if err != nil {
 		return err
 	}
@@ -145,36 +151,28 @@ func (p *Proxy) Transport() *http.Transport {
 	}
 }
 
+// IgnoreHeader will cause h to be ignored during matching on replay.
+func (p *Proxy) IgnoreHeader(h string) {
+	p.ignoreHeaders[http.CanonicalHeaderKey(h)] = true
+}
+
 // Close closes the proxy. If the proxy is recording, it also writes the log.
 func (p *Proxy) Close() error {
 	p.mproxy.Close()
 	if p.logger != nil {
-		return writeLog(p.logger, p.filename)
+		return p.writeLog()
 	}
 	return nil
 }
 
-func writeLog(logger *har.Logger, filename string) error {
-	har := logger.ExportAndReset()
-	bytes, err := json.Marshal(har)
+func (p *Proxy) writeLog() error {
+	lg := p.logger.Extract()
+	lg.Initial = p.Initial
+	bytes, err := json.MarshalIndent(lg, "", "  ")
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filename, bytes, 0600) // only accessible by owner
-}
-
-// redactHeadersThenLog removes sensitive header contents before logging.
-func redactHeadersThenLog(req *http.Request, hl *har.Logger) error {
-	const auth = "Authorization"
-	a, ok := req.Header[auth]
-	if ok {
-		req.Header.Set(auth, "REDACTED")
-	}
-	err := hl.ModifyRequest(req)
-	if ok {
-		req.Header[auth] = a
-	}
-	return err
+	return ioutil.WriteFile(p.filename, bytes, 0600) // only accessible by owner
 }
 
 // skipLoggingByHost disables logging for traffic to a particular host.

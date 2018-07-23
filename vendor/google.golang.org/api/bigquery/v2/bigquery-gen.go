@@ -1,5 +1,7 @@
 // Package bigquery provides access to the BigQuery API.
 //
+// This package is DEPRECATED. Use package cloud.google.com/go/bigquery instead.
+//
 // See https://cloud.google.com/bigquery/
 //
 // Usage example:
@@ -435,6 +437,22 @@ type Dataset struct {
 
 	// DatasetReference: [Required] A reference that identifies the dataset.
 	DatasetReference *DatasetReference `json:"datasetReference,omitempty"`
+
+	// DefaultPartitionExpirationMs: [Optional] The default partition
+	// expiration for all partitioned tables in the dataset, in
+	// milliseconds. Once this property is set, all newly-created
+	// partitioned tables in the dataset will have an expirationMs property
+	// in the timePartitioning settings set to this value, and changing the
+	// value will only affect new tables, not existing ones. The storage in
+	// a partition will have an expiration time of its partition time plus
+	// this value. Setting this property overrides the use of
+	// defaultTableExpirationMs for partitioned tables: only one of
+	// defaultTableExpirationMs and defaultPartitionExpirationMs will be
+	// used for any new partitioned table. If you provide an explicit
+	// timePartitioning.expirationMs when creating or updating a partitioned
+	// table, that value takes precedence over the default partition
+	// expiration time indicated by this property.
+	DefaultPartitionExpirationMs int64 `json:"defaultPartitionExpirationMs,omitempty,string"`
 
 	// DefaultTableExpirationMs: [Optional] The default lifetime of all
 	// tables in the dataset, in milliseconds. The minimum value is 3600000
@@ -1233,6 +1251,73 @@ func (s *GoogleSheetsOptions) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+type IterationResult struct {
+	// DurationMs: [Output-only, Beta] Time taken to run the training
+	// iteration in milliseconds.
+	DurationMs int64 `json:"durationMs,omitempty,string"`
+
+	// EvalLoss: [Output-only, Beta] Eval loss computed on the eval data at
+	// the end of the iteration. The eval loss is used for early stopping to
+	// avoid overfitting. No eval loss if eval_split_method option is
+	// specified as no_split or auto_split with input data size less than
+	// 500 rows.
+	EvalLoss float64 `json:"evalLoss,omitempty"`
+
+	// Index: [Output-only, Beta] Index of the ML training iteration,
+	// starting from zero for each training run.
+	Index int64 `json:"index,omitempty"`
+
+	// LearnRate: [Output-only, Beta] Learning rate used for this iteration,
+	// it varies for different training iterations if learn_rate_strategy
+	// option is not constant.
+	LearnRate float64 `json:"learnRate,omitempty"`
+
+	// TrainingLoss: [Output-only, Beta] Training loss computed on the
+	// training data at the end of the iteration. The training loss function
+	// is defined by model type.
+	TrainingLoss float64 `json:"trainingLoss,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "DurationMs") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "DurationMs") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *IterationResult) MarshalJSON() ([]byte, error) {
+	type NoMethod IterationResult
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+func (s *IterationResult) UnmarshalJSON(data []byte) error {
+	type NoMethod IterationResult
+	var s1 struct {
+		EvalLoss     gensupport.JSONFloat64 `json:"evalLoss"`
+		LearnRate    gensupport.JSONFloat64 `json:"learnRate"`
+		TrainingLoss gensupport.JSONFloat64 `json:"trainingLoss"`
+		*NoMethod
+	}
+	s1.NoMethod = (*NoMethod)(s)
+	if err := json.Unmarshal(data, &s1); err != nil {
+		return err
+	}
+	s.EvalLoss = float64(s1.EvalLoss)
+	s.LearnRate = float64(s1.LearnRate)
+	s.TrainingLoss = float64(s1.TrainingLoss)
+	return nil
+}
+
 type Job struct {
 	// Configuration: [Required] Describes the job configuration.
 	Configuration *JobConfiguration `json:"configuration,omitempty"`
@@ -1956,7 +2041,8 @@ type JobReference struct {
 	JobId string `json:"jobId,omitempty"`
 
 	// Location: [Experimental] The geographic location of the job. Required
-	// except for US and EU.
+	// except for US and EU. See details at
+	// https://cloud.google.com/bigquery/docs/dataset-locations#specifying_your_location.
 	Location string `json:"location,omitempty"`
 
 	// ProjectId: [Required] The ID of the project containing this job.
@@ -2082,6 +2168,17 @@ type JobStatistics2 struct {
 	// processed for the job.
 	EstimatedBytesProcessed int64 `json:"estimatedBytesProcessed,omitempty,string"`
 
+	// ModelTrainingCurrentIteration: [Output-only, Beta] Index of current
+	// ML training iteration. Updated during create model query job to show
+	// job progress.
+	ModelTrainingCurrentIteration int64 `json:"modelTrainingCurrentIteration,omitempty"`
+
+	// ModelTrainingExpectedTotalIteration: [Output-only, Beta] Expected
+	// number of iterations for the create model query job specified as
+	// num_iterations in the input query. The actual total number of
+	// iterations may be less than this number due to early stop.
+	ModelTrainingExpectedTotalIteration int64 `json:"modelTrainingExpectedTotalIteration,omitempty,string"`
+
 	// NumDmlAffectedRows: [Output-only] The number of rows affected by a
 	// DML statement. Present only for DML statements INSERT, UPDATE or
 	// DELETE.
@@ -2095,6 +2192,10 @@ type JobStatistics2 struct {
 	// list.
 	ReferencedTables []*TableReference `json:"referencedTables,omitempty"`
 
+	// ReservationUsage: [Output-only] Job resource usage breakdown by
+	// reservation.
+	ReservationUsage []*JobStatistics2ReservationUsage `json:"reservationUsage,omitempty"`
+
 	// Schema: [Output-only] The schema of the results. Present only for
 	// successful dry run of non-legacy SQL queries.
 	Schema *TableSchema `json:"schema,omitempty"`
@@ -2102,7 +2203,7 @@ type JobStatistics2 struct {
 	// StatementType: [Output-only, Experimental] The type of query
 	// statement, if valid. Possible values (new values might be added in
 	// the future): "SELECT": SELECT query. "INSERT": INSERT query; see
-	// https://cloud.google.com/bigquery/docs/reference/standard-sql/data-manipulation-language "UPDATE": UPDATE query; see https://cloud.google.com/bigquery/docs/reference/standard-sql/data-manipulation-language "DELETE": DELETE query; see https://cloud.google.com/bigquery/docs/reference/standard-sql/data-manipulation-language "CREATE_TABLE": CREATE [OR REPLACE] TABLE without AS SELECT. "CREATE_TABLE_AS_SELECT": CREATE [OR REPLACE] TABLE ... AS SELECT ... "DROP_TABLE": DROP TABLE query. "CREATE_VIEW": CREATE [OR REPLACE] VIEW ... AS SELECT ... "DROP_VIEW": DROP VIEW
+	// https://cloud.google.com/bigquery/docs/reference/standard-sql/data-manipulation-language "UPDATE": UPDATE query; see https://cloud.google.com/bigquery/docs/reference/standard-sql/data-manipulation-language "DELETE": DELETE query; see https://cloud.google.com/bigquery/docs/reference/standard-sql/data-manipulation-language "MERGE": MERGE query; see https://cloud.google.com/bigquery/docs/reference/standard-sql/data-manipulation-language "CREATE_TABLE": CREATE [OR REPLACE] TABLE without AS SELECT. "CREATE_TABLE_AS_SELECT": CREATE [OR REPLACE] TABLE ... AS SELECT ... "DROP_TABLE": DROP TABLE query. "CREATE_VIEW": CREATE [OR REPLACE] VIEW ... AS SELECT ... "DROP_VIEW": DROP VIEW
 	// query.
 	StatementType string `json:"statementType,omitempty"`
 
@@ -2147,6 +2248,38 @@ type JobStatistics2 struct {
 
 func (s *JobStatistics2) MarshalJSON() ([]byte, error) {
 	type NoMethod JobStatistics2
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type JobStatistics2ReservationUsage struct {
+	// Name: [Output-only] Reservation name or "unreserved" for on-demand
+	// resources usage.
+	Name string `json:"name,omitempty"`
+
+	// SlotMs: [Output-only] Slot-milliseconds the job spent in the given
+	// reservation.
+	SlotMs int64 `json:"slotMs,omitempty,string"`
+
+	// ForceSendFields is a list of field names (e.g. "Name") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Name") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *JobStatistics2ReservationUsage) MarshalJSON() ([]byte, error) {
+	type NoMethod JobStatistics2ReservationUsage
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -2268,6 +2401,76 @@ func (s *JobStatus) MarshalJSON() ([]byte, error) {
 }
 
 type JsonValue interface{}
+
+type ModelDefinition struct {
+	// ModelOptions: [Output-only, Beta] Model options used for the first
+	// training run. These options are immutable for subsequent training
+	// runs. Default values are used for any options not specified in the
+	// input query.
+	ModelOptions *ModelDefinitionModelOptions `json:"modelOptions,omitempty"`
+
+	// TrainingRuns: [Output-only, Beta] Information about ml training runs,
+	// each training run comprises of multiple iterations and there may be
+	// multiple training runs for the model if warm start is used or if a
+	// user decides to continue a previously cancelled query.
+	TrainingRuns []*TrainingRun `json:"trainingRuns,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "ModelOptions") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ModelOptions") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ModelDefinition) MarshalJSON() ([]byte, error) {
+	type NoMethod ModelDefinition
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ModelDefinitionModelOptions: [Output-only, Beta] Model options used
+// for the first training run. These options are immutable for
+// subsequent training runs. Default values are used for any options not
+// specified in the input query.
+type ModelDefinitionModelOptions struct {
+	Labels []string `json:"labels,omitempty"`
+
+	LossType string `json:"lossType,omitempty"`
+
+	ModelType string `json:"modelType,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Labels") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Labels") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ModelDefinitionModelOptions) MarshalJSON() ([]byte, error) {
+	type NoMethod ModelDefinitionModelOptions
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
 
 type ProjectList struct {
 	// Etag: A hash of the page of results
@@ -2827,6 +3030,11 @@ type Table struct {
 	// Location: [Output-only] The geographic location where the table
 	// resides. This value is inherited from the dataset.
 	Location string `json:"location,omitempty"`
+
+	// Model: [Output-only, Beta] Present iff this table represents a ML
+	// model. Describes the training information for the model, and it is
+	// required to run 'PREDICT' queries.
+	Model *ModelDefinition `json:"model,omitempty"`
 
 	// NumBytes: [Output-only] The size of this table in bytes, excluding
 	// any data in the streaming buffer.
@@ -3393,13 +3601,16 @@ func (s *TableSchema) MarshalJSON() ([]byte, error) {
 
 type TimePartitioning struct {
 	// ExpirationMs: [Optional] Number of milliseconds for which to keep the
-	// storage for a partition.
+	// storage for partitions in the table. The storage in a partition will
+	// have an expiration time of its partition time plus this value.
 	ExpirationMs int64 `json:"expirationMs,omitempty,string"`
 
 	// Field: [Experimental] [Optional] If not set, the table is partitioned
-	// by pseudo column '_PARTITIONTIME'; if set, the table is partitioned
-	// by this field. The field must be a top-level TIMESTAMP or DATE field.
-	// Its mode must be NULLABLE or REQUIRED.
+	// by pseudo column, referenced via either '_PARTITIONTIME' as TIMESTAMP
+	// type, or '_PARTITIONDATE' as DATE type. If field is specified, the
+	// table is instead partitioned by this field. The field must be a
+	// top-level TIMESTAMP or DATE field. Its mode must be NULLABLE or
+	// REQUIRED.
 	Field string `json:"field,omitempty"`
 
 	// RequirePartitionFilter: [Experimental] [Optional] If set to true,
@@ -3432,6 +3643,123 @@ func (s *TimePartitioning) MarshalJSON() ([]byte, error) {
 	type NoMethod TimePartitioning
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type TrainingRun struct {
+	// IterationResults: [Output-only, Beta] List of each iteration results.
+	IterationResults []*IterationResult `json:"iterationResults,omitempty"`
+
+	// StartTime: [Output-only, Beta] Training run start time in
+	// milliseconds since the epoch.
+	StartTime string `json:"startTime,omitempty"`
+
+	// State: [Output-only, Beta] Different state applicable for a training
+	// run. IN PROGRESS: Training run is in progress. FAILED: Training run
+	// ended due to a non-retryable failure. SUCCEEDED: Training run
+	// successfully completed. CANCELLED: Training run cancelled by the
+	// user.
+	State string `json:"state,omitempty"`
+
+	// TrainingOptions: [Output-only, Beta] Training options used by this
+	// training run. These options are mutable for subsequent training runs.
+	// Default values are explicitly stored for options not specified in the
+	// input query of the first training run. For subsequent training runs,
+	// any option not explicitly specified in the input query will be copied
+	// from the previous training run.
+	TrainingOptions *TrainingRunTrainingOptions `json:"trainingOptions,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "IterationResults") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "IterationResults") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *TrainingRun) MarshalJSON() ([]byte, error) {
+	type NoMethod TrainingRun
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// TrainingRunTrainingOptions: [Output-only, Beta] Training options used
+// by this training run. These options are mutable for subsequent
+// training runs. Default values are explicitly stored for options not
+// specified in the input query of the first training run. For
+// subsequent training runs, any option not explicitly specified in the
+// input query will be copied from the previous training run.
+type TrainingRunTrainingOptions struct {
+	EarlyStop bool `json:"earlyStop,omitempty"`
+
+	L1Reg float64 `json:"l1Reg,omitempty"`
+
+	L2Reg float64 `json:"l2Reg,omitempty"`
+
+	LearnRate float64 `json:"learnRate,omitempty"`
+
+	LearnRateStrategy string `json:"learnRateStrategy,omitempty"`
+
+	LineSearchInitLearnRate float64 `json:"lineSearchInitLearnRate,omitempty"`
+
+	MaxIteration int64 `json:"maxIteration,omitempty,string"`
+
+	MinRelProgress float64 `json:"minRelProgress,omitempty"`
+
+	WarmStart bool `json:"warmStart,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "EarlyStop") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "EarlyStop") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *TrainingRunTrainingOptions) MarshalJSON() ([]byte, error) {
+	type NoMethod TrainingRunTrainingOptions
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+func (s *TrainingRunTrainingOptions) UnmarshalJSON(data []byte) error {
+	type NoMethod TrainingRunTrainingOptions
+	var s1 struct {
+		L1Reg                   gensupport.JSONFloat64 `json:"l1Reg"`
+		L2Reg                   gensupport.JSONFloat64 `json:"l2Reg"`
+		LearnRate               gensupport.JSONFloat64 `json:"learnRate"`
+		LineSearchInitLearnRate gensupport.JSONFloat64 `json:"lineSearchInitLearnRate"`
+		MinRelProgress          gensupport.JSONFloat64 `json:"minRelProgress"`
+		*NoMethod
+	}
+	s1.NoMethod = (*NoMethod)(s)
+	if err := json.Unmarshal(data, &s1); err != nil {
+		return err
+	}
+	s.L1Reg = float64(s1.L1Reg)
+	s.L2Reg = float64(s1.L2Reg)
+	s.LearnRate = float64(s1.LearnRate)
+	s.LineSearchInitLearnRate = float64(s1.LineSearchInitLearnRate)
+	s.MinRelProgress = float64(s1.MinRelProgress)
+	return nil
 }
 
 type UserDefinedFunctionResource struct {
@@ -4440,7 +4768,9 @@ func (r *JobsService) Cancel(projectId string, jobId string) *JobsCancelCall {
 }
 
 // Location sets the optional parameter "location": [Experimental] The
-// geographic location of the job. Required except for US and EU.
+// geographic location of the job. Required except for US and EU. See
+// details at
+// https://cloud.google.com/bigquery/docs/dataset-locations#specifying_your_location.
 func (c *JobsCancelCall) Location(location string) *JobsCancelCall {
 	c.urlParams_.Set("location", location)
 	return c
@@ -4543,7 +4873,7 @@ func (c *JobsCancelCall) Do(opts ...googleapi.CallOption) (*JobCancelResponse, e
 	//       "type": "string"
 	//     },
 	//     "location": {
-	//       "description": "[Experimental] The geographic location of the job. Required except for US and EU.",
+	//       "description": "[Experimental] The geographic location of the job. Required except for US and EU. See details at https://cloud.google.com/bigquery/docs/dataset-locations#specifying_your_location.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
@@ -4589,7 +4919,9 @@ func (r *JobsService) Get(projectId string, jobId string) *JobsGetCall {
 }
 
 // Location sets the optional parameter "location": [Experimental] The
-// geographic location of the job. Required except for US and EU.
+// geographic location of the job. Required except for US and EU. See
+// details at
+// https://cloud.google.com/bigquery/docs/dataset-locations#specifying_your_location.
 func (c *JobsGetCall) Location(location string) *JobsGetCall {
 	c.urlParams_.Set("location", location)
 	return c
@@ -4705,7 +5037,7 @@ func (c *JobsGetCall) Do(opts ...googleapi.CallOption) (*Job, error) {
 	//       "type": "string"
 	//     },
 	//     "location": {
-	//       "description": "[Experimental] The geographic location of the job. Required except for US and EU.",
+	//       "description": "[Experimental] The geographic location of the job. Required except for US and EU. See details at https://cloud.google.com/bigquery/docs/dataset-locations#specifying_your_location.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
@@ -4751,7 +5083,8 @@ func (r *JobsService) GetQueryResults(projectId string, jobId string) *JobsGetQu
 
 // Location sets the optional parameter "location": [Experimental] The
 // geographic location where the job should run. Required except for US
-// and EU.
+// and EU. See details at
+// https://cloud.google.com/bigquery/docs/dataset-locations#specifying_your_location.
 func (c *JobsGetQueryResultsCall) Location(location string) *JobsGetQueryResultsCall {
 	c.urlParams_.Set("location", location)
 	return c
@@ -4897,7 +5230,7 @@ func (c *JobsGetQueryResultsCall) Do(opts ...googleapi.CallOption) (*GetQueryRes
 	//       "type": "string"
 	//     },
 	//     "location": {
-	//       "description": "[Experimental] The geographic location where the job should run. Required except for US and EU.",
+	//       "description": "[Experimental] The geographic location where the job should run. Required except for US and EU. See details at https://cloud.google.com/bigquery/docs/dataset-locations#specifying_your_location.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },

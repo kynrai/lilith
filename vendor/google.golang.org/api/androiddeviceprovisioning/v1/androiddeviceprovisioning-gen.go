@@ -286,9 +286,7 @@ type Company struct {
 	CompanyId int64 `json:"companyId,omitempty,string"`
 
 	// CompanyName: Required. The name of the company. For example _XYZ
-	// Corp_. Characters
-	// allowed are: Latin letters, numerals, hyphens, and spaces. Displayed
-	// to the
+	// Corp_. Displayed to the
 	// customer's employees in the zero-touch enrollment portal.
 	CompanyName string `json:"companyName,omitempty"`
 
@@ -306,6 +304,23 @@ type Company struct {
 	// add,
 	// delete, and edit your organization's portal users.
 	OwnerEmails []string `json:"ownerEmails,omitempty"`
+
+	// TermsStatus: Output only. Whether any user from the company has
+	// accepted the latest
+	// Terms of Service (ToS). See
+	// TermsStatus.
+	//
+	// Possible values:
+	//   "TERMS_STATUS_UNSPECIFIED" - Default value. This value should never
+	// be set if the enum is present.
+	//   "TERMS_STATUS_NOT_ACCEPTED" - None of the company's users have
+	// accepted the ToS.
+	//   "TERMS_STATUS_ACCEPTED" - One (or more) of the company's users has
+	// accepted the ToS.
+	//   "TERMS_STATUS_STALE" - None of the company's users has accepted the
+	// current ToS but at least one
+	// user accepted a previous ToS.
+	TermsStatus string `json:"termsStatus,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
 	// server.

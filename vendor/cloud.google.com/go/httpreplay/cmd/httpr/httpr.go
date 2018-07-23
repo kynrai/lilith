@@ -1,4 +1,4 @@
-// Copyright 2018 Google Inc. All Rights Reserved.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,11 +18,14 @@
 // To get the CA certificate of the proxy, issue a GET to http://localhost:CP/authority.cer, where
 // CP is the control port.
 
+// +build go1.8
+
 package main
 
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -34,10 +37,11 @@ import (
 )
 
 var (
-	port        = flag.Int("port", 8080, "port of the proxy")
-	controlPort = flag.Int("control-port", 8181, "port for controlling the proxy")
-	record      = flag.String("record", "", "record traffic and save to filename")
-	replay      = flag.String("replay", "", "read filename and replay traffic")
+	port         = flag.Int("port", 8080, "port of the proxy")
+	controlPort  = flag.Int("control-port", 8181, "port for controlling the proxy")
+	record       = flag.String("record", "", "record traffic and save to filename")
+	replay       = flag.String("replay", "", "read filename and replay traffic")
+	debugHeaders = flag.Bool("debug-headers", false, "log header mismatches")
 )
 
 func main() {
@@ -60,10 +64,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	proxy.DebugHeaders = *debugHeaders
 
-	// Expose certificate authority on the control port.
+	// Expose handlers on the control port.
 	mux := http.NewServeMux()
 	mux.Handle("/authority.cer", martianhttp.NewAuthorityHandler(pr.CACert))
+	mux.HandleFunc("/initial", handleInitial(pr))
 	lControl, err := net.Listen("tcp", fmt.Sprintf(":%d", *controlPort))
 	if err != nil {
 		log.Fatal(err)
@@ -78,5 +84,29 @@ func main() {
 	log.Println("httpr: shutting down")
 	if err := pr.Close(); err != nil {
 		log.Fatal(err)
+	}
+}
+
+func handleInitial(pr *proxy.Proxy) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		switch req.Method {
+		case "GET":
+			if pr.Initial != nil {
+				w.Write(pr.Initial)
+			}
+
+		case "POST":
+			bytes, err := ioutil.ReadAll(req.Body)
+			req.Body.Close()
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				fmt.Fprintf(w, "reading body: %v", err)
+			}
+			pr.Initial = bytes
+
+		default:
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprint(w, "use GET to retrieve initial or POST to set it")
+		}
 	}
 }
